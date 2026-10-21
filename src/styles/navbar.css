@@ -1,0 +1,691 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ==========================================================
+   1. NAVBAR MAIN CONTAINER (SEAMLESS FLOATING WRAPPER)
+   ========================================================== */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 84px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 45px;
+
+  /* Transparent floating layer merging seamlessly with the background */
+  background: transparent;
+  border: none;
+  z-index: 9999;
+
+  transition:
+    background 0.35s ease,
+    height 0.3s ease,
+    padding 0.3s ease;
+}
+
+/* Scrolled state: Subtle ambient backdrop to enhance contrast */
+.navbar.scrolled {
+  height: 76px;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 10, 14, 0.65) 0%,
+    rgba(10, 10, 14, 0.2) 80%,
+    transparent 100%
+  );
+}
+
+/* ==========================================================
+   2. BRAND LOGO (LEFT SIDE)
+   ========================================================== */
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  text-decoration: none;
+  color: #ffffff;
+  white-space: nowrap;
+
+  transition:
+    transform 0.25s ease,
+    color 0.25s ease;
+}
+
+.logo svg {
+  color: #ff914d;
+  font-size: 34px;
+  filter: drop-shadow(0 2px 8px rgba(255, 145, 77, 0.45));
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.logo span {
+  font-family: Georgia, serif;
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.logo:hover {
+  color: #ffae75;
+  transform: translateY(-1px);
+}
+
+.logo:hover svg {
+  transform: rotate(-8deg) scale(1.06);
+  filter: drop-shadow(0 4px 12px rgba(255, 145, 77, 0.65));
+}
+
+/* ==========================================================
+   3. UNIFIED GLASS NAVIGATION PANEL (CENTER ALIGNED)
+   ==========================================================
+   ONE SINGLE outer glass panel centered between Logo & Login.
+   ========================================================== */
+
+.nav-links {
+  list-style: none;
+
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  /* Centered perfectly in the navbar */
+  margin: 0 auto;
+
+  padding: 6px 12px;
+
+  /* Modern rounded glass rectangle */
+  border-radius: 16px;
+
+  /* Translucent glass background */
+  background: rgba(255, 255, 255, 0.06);
+
+  /* True optical frosted glass effect */
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+
+  /* ONLY ONE SINGLE SHARED OUTER GLASS BORDER */
+  border: 1px solid rgba(255, 255, 255, 0.14);
+
+  /* Subtle inner light reflection & soft ambient drop shadow */
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.04),
+    0 8px 24px -6px rgba(0, 0, 0, 0.3);
+
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.nav-links li {
+  list-style: none;
+  display: flex;
+  align-items: center;
+}
+
+/* ==========================================================
+   4. NAVIGATION ITEMS (INSIDE THE UNIFIED PANEL)
+   ==========================================================
+   NO individual outer borders. Smooth hover & active states.
+   ========================================================== */
+
+.nav-links li a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 8px 14px;
+
+  /* NO INDIVIDUAL BORDER */
+  border: none;
+  border-radius: 10px;
+
+  background: transparent;
+
+  color: rgba(245, 245, 245, 0.9);
+  text-decoration: none;
+
+  font-family: Georgia, serif;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.2s ease;
+}
+
+.nav-links li a svg {
+  font-size: 17px;
+  opacity: 0.85;
+  transition:
+    transform 0.25s ease,
+    color 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.nav-links li a:hover {
+  color: #ff914d;
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.nav-links li a:hover svg {
+  opacity: 1;
+  color: #ff914d;
+  transform: translateY(-1px);
+}
+
+/* Active page: elegant distinct translucent highlight */
+.nav-links li a.active {
+  color: #ffffff;
+  background-color: rgba(255, 145, 77, 0.2);
+  font-weight: 700;
+}
+
+.nav-links li a.active svg {
+  color: #ff914d;
+  opacity: 1;
+}
+
+/* Counter badges */
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  margin-left: 2px;
+}
+
+.fav-badge {
+  background: #ff4757;
+  box-shadow: 0 0 8px rgba(255, 71, 87, 0.6);
+}
+
+.planner-badge {
+  background: #ff914d;
+  box-shadow: 0 0 8px rgba(255, 145, 77, 0.6);
+}
+
+/* ==========================================================
+   5. LOGIN BUTTON (PRESERVED ORIGINAL DESIGN & FUNCTIONALITY)
+   ========================================================== */
+
+.login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  min-width: 125px;
+
+  padding: 11px 22px;
+
+  border-radius: 25px;
+
+  background: linear-gradient(135deg, #ff9b50, #ff6b00);
+
+  color: #ffffff;
+
+  text-decoration: none;
+
+  font-family: Georgia, serif;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  transition: 0.25s ease;
+
+  box-shadow: 0 5px 15px rgba(255, 107, 0, 0.25);
+}
+
+.login-btn svg {
+  font-size: 18px;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(255, 107, 0, 0.4);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+}
+
+/* ==========================================================
+   5.1 ALREADY LOGGED IN BUTTON & USER DROPDOWN
+   ========================================================== */
+
+.user-menu-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.already-logged-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  padding: 9px 18px;
+  border-radius: 25px;
+
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(255, 145, 77, 0.25));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  border: 1px solid rgba(74, 222, 128, 0.45);
+  color: #ffffff;
+
+  font-family: Georgia, serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+
+  box-shadow: 0 4px 18px rgba(34, 197, 94, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.already-logged-btn:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(255, 145, 77, 0.35));
+  border-color: rgba(74, 222, 128, 0.7);
+  box-shadow: 0 6px 22px rgba(34, 197, 94, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.already-logged-btn:active {
+  transform: translateY(0);
+}
+
+.status-indicator {
+  width: 9px;
+  height: 9px;
+  background-color: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #22c55e;
+  animation: pulseGlow 2s infinite;
+}
+
+@keyframes pulseGlow {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+.already-logged-btn .logged-icon {
+  font-size: 16px;
+  color: #4ade80;
+}
+
+.already-logged-btn .logged-text {
+  letter-spacing: -0.2px;
+}
+
+.already-logged-btn .chevron-icon {
+  font-size: 11px;
+  opacity: 0.8;
+  transition: transform 0.25s ease;
+}
+
+.already-logged-btn .chevron-icon.open {
+  transform: rotate(180deg);
+}
+
+/* User Dropdown Menu */
+.user-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  width: 275px;
+
+  background: rgba(18, 18, 24, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+
+  padding: 18px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
+
+  z-index: 10000;
+  animation: dropdownFadeIn 0.22s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.user-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.user-avatar-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff9b50, #ff6b00);
+  color: #ffffff;
+  font-family: Georgia, serif;
+  font-weight: 700;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.35);
+  flex-shrink: 0;
+}
+
+.user-info-text {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.user-display-name {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.user-display-email {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  margin-top: 1px;
+}
+
+.logged-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  padding: 2px 8px;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  border-radius: 20px;
+  color: #4ade80;
+  font-size: 11px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.logged-status-pill .pulse-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #22c55e;
+  border-radius: 50%;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 14px 0 10px;
+}
+
+.user-dropdown-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dropdown-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.dropdown-action-btn.view-account {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.dropdown-action-btn.view-account:hover {
+  background: rgba(255, 145, 77, 0.22);
+  color: #ff914d;
+}
+
+.dropdown-action-btn.logout-action {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+
+.dropdown-action-btn.logout-action:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+
+/* ==========================================================
+   6. BROWSER FALLBACK (WHEN BACKDROP-FILTER IS NOT SUPPORTED)
+   ========================================================== */
+
+@supports not (
+  (-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))
+) {
+  .nav-links {
+    background: rgba(22, 22, 28, 0.92);
+  }
+
+  .nav-links li a:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .navbar.scrolled {
+    background: rgba(12, 12, 16, 0.95);
+  }
+}
+
+/* ==========================================================
+   7. RESPONSIVE DESIGN (320px - 1920px)
+   ========================================================== */
+
+@media (max-width: 1150px) {
+  .navbar {
+    padding: 0 25px;
+  }
+
+  .logo span {
+    font-size: 32px;
+  }
+
+  .nav-links {
+    margin: 0 auto;
+    gap: 2px;
+    padding: 5px 8px;
+  }
+
+  .nav-links li a {
+    padding: 7px 11px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 900px) {
+  .navbar {
+    height: 72px;
+    padding: 0 20px;
+  }
+
+  .navbar.scrolled {
+    height: 66px;
+  }
+
+  .logo span {
+    font-size: 26px;
+  }
+
+  .logo svg {
+    font-size: 26px;
+  }
+
+  .nav-links {
+    margin: 0 auto;
+    padding: 5px 6px;
+    gap: 2px;
+  }
+
+  /* Compact panel on smaller screens: retain grouped icons inside unified glass panel */
+  .nav-links li a {
+    padding: 8px 10px;
+  }
+
+  .nav-links li a span {
+    display: none;
+  }
+
+  .nav-links li a svg {
+    font-size: 19px;
+    opacity: 0.95;
+  }
+
+  .login-btn {
+    min-width: auto;
+    padding: 9px 16px;
+    font-size: 14px;
+  }
+
+  .already-logged-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .user-dropdown-panel {
+    width: 250px;
+  }
+}
+
+@media (max-width: 600px) {
+  .navbar {
+    padding: 0 12px;
+    height: 66px;
+  }
+
+  .navbar.scrolled {
+    height: 60px;
+  }
+
+  .logo span {
+    display: none;
+  }
+
+  .logo svg {
+    font-size: 24px;
+  }
+
+  .nav-links {
+    margin: 0 auto;
+    padding: 4px 6px;
+    gap: 1px;
+  }
+
+  .nav-links li a {
+    padding: 7px 8px;
+  }
+
+  .nav-links li a svg {
+    font-size: 18px;
+  }
+
+  .login-btn {
+    padding: 8px 12px;
+    min-width: auto;
+  }
+
+  .login-btn span {
+    display: none;
+  }
+
+  .login-btn svg {
+    font-size: 16px;
+  }
+
+  .already-logged-btn {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .already-logged-btn .logged-text {
+    display: none;
+  }
+
+  .already-logged-btn .chevron-icon {
+    display: none;
+  }
+
+  .user-dropdown-panel {
+    right: -6px;
+    width: 240px;
+  }
+}
+
+@media (max-width: 375px) {
+  .navbar {
+    padding: 0 8px;
+  }
+
+  .nav-links {
+    margin: 0 auto;
+    padding: 3px 4px;
+  }
+
+  .nav-links li a {
+    padding: 6px 6px;
+  }
+}

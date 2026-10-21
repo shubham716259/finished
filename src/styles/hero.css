@@ -1,0 +1,229 @@
+/* =========================
+   HERO SECTION
+========================= */
+
+.hero {
+  min-height: 100vh;
+  width: 100%;
+
+  position: relative;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 110px 30px 50px;
+
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.72)),
+    url("https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=2000&q=90");
+
+  background-size: cover;
+  background-position: center;
+
+  background-attachment: fixed;
+
+  color: white;
+
+  overflow: hidden;
+}
+
+/* Dark cinematic overlay */
+
+.hero::after {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background: radial-gradient(
+    circle at center,
+    rgba(0, 0, 0, 0.05),
+    rgba(0, 0, 0, 0.55)
+  );
+
+  pointer-events: none;
+}
+
+/* =========================
+   HERO CONTENT
+========================= */
+
+.hero-content {
+  position: relative;
+
+  z-index: 2;
+
+  max-width: 850px;
+
+  text-align: center;
+
+  padding: 40px 20px;
+
+  animation: heroFade 1s ease;
+}
+
+/* Welcome */
+
+.hero-content .welcome {
+  font-family: Georgia, serif;
+
+  font-size: 24px;
+
+  letter-spacing: 5px;
+
+  margin-bottom: 25px;
+
+  color: #f5f5f5;
+}
+
+/* Main title */
+
+.hero-content h1 {
+  font-family: Georgia, serif;
+
+  font-size: clamp(55px, 7vw, 95px);
+
+  line-height: 1;
+
+  margin-bottom: 25px;
+
+  color: #ff914d;
+
+  text-shadow: 0 5px 25px rgba(0, 0, 0, 0.6);
+}
+
+/* Subtitle */
+
+.hero-content h2 {
+  font-family: Georgia, serif;
+
+  font-size: clamp(28px, 4vw, 45px);
+
+  line-height: 1.15;
+
+  margin-bottom: 28px;
+
+  color: white;
+
+  text-shadow: 0 3px 15px rgba(0, 0, 0, 0.7);
+}
+
+/* Description */
+
+.hero-content p {
+  max-width: 760px;
+
+  margin: 0 auto 35px;
+
+  font-family: Georgia, serif;
+
+  font-size: 20px;
+
+  line-height: 1.7;
+
+  color: #eeeeee;
+
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+/* =========================
+   EXPLORE BUTTON
+========================= */
+
+.explore-btn {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 15px 35px;
+
+  border-radius: 30px;
+
+  background: linear-gradient(135deg, #ff9b50, #ff6b00);
+
+  color: white;
+
+  text-decoration: none;
+
+  font-size: 18px;
+
+  font-weight: 600;
+
+  box-shadow: 0 10px 30px rgba(255, 107, 0, 0.3);
+
+  transition: all 0.3s ease;
+}
+
+.explore-btn:hover {
+  transform: translateY(-4px);
+
+  box-shadow: 0 15px 35px rgba(255, 107, 0, 0.45);
+
+  background: linear-gradient(135deg, #ffab63, #ff7800);
+}
+
+/* =========================
+   ANIMATION
+========================= */
+
+@keyframes heroFade {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 700px) {
+  .hero {
+    padding: 100px 20px 40px;
+
+    background-attachment: scroll;
+  }
+
+  .hero-content {
+    padding: 30px 10px;
+  }
+
+  .hero-content .welcome {
+    font-size: 17px;
+
+    letter-spacing: 3px;
+
+    margin-bottom: 18px;
+  }
+
+  .hero-content h1 {
+    font-size: 55px;
+
+    margin-bottom: 20px;
+  }
+
+  .hero-content h2 {
+    font-size: 28px;
+  }
+
+  .hero-content p {
+    font-size: 16px;
+
+    line-height: 1.6;
+  }
+
+  .explore-btn {
+    padding: 13px 28px;
+
+    font-size: 16px;
+  }
+}

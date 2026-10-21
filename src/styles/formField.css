@@ -1,0 +1,11 @@
+.form-field-error {
+  display: block;
+  margin-top: 6px;
+  color: #ffb3b3;
+  font-size: 13px;
+}
+
+.login-container input[aria-invalid="true"],
+.signup-container input[aria-invalid="true"] {
+  border-color: #ff7777;
+}
