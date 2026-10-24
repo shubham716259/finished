@@ -36,36 +36,29 @@ function App() {
                   <Navbar />
                   <div className="main-content-wrapper">
                     <Routes>
-                      {/* Home */}
-                      <Route path="/" element={<Hero />} />
+                      {/* App pages */}
+                      <Route>
+                        <Route path="/" element={<Hero />} />
+                        <Route path="/recipes" element={<Recipes />} />
+                        <Route path="/recipe/:id" element={<RecipeDetails />} />
+                        <Route path="/favorites" element={<Favorites />} />
+                        <Route path="/planner" element={<MealPlanner />} />
+                        <Route path="/shopping" element={<ShoppingList />} />
+                        <Route path="/surprise" element={<SurpriseMe />} />
+                        <Route path="/about" element={<About />} />
+                      </Route>
 
-                      {/* Recipes Explorer */}
-                      <Route path="/recipes" element={<Recipes />} />
+                      {/* Authentication pages */}
+                      <Route>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/signup" element={<Signup />} />
+                        <Route
+                          path="/forgot-password"
+                          element={<ForgotPassword />}
+                        />
+                      </Route>
 
-                      {/* Recipe Details */}
-                      <Route path="/recipe/:id" element={<RecipeDetails />} />
-
-                      {/* Favorites */}
-                      <Route path="/favorites" element={<Favorites />} />
-
-                      {/* Meal Planner */}
-                      <Route path="/planner" element={<MealPlanner />} />
-
-                      {/* Shopping List */}
-                      <Route path="/shopping" element={<ShoppingList />} />
-
-                      {/* Surprise Me */}
-                      <Route path="/surprise" element={<SurpriseMe />} />
-
-                      {/* About */}
-                      <Route path="/about" element={<About />} />
-
-                      {/* Auth Routes */}
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/signup" element={<Signup />} />
-                      <Route path="/forgot-password" element={<ForgotPassword />} />
-
-                      {/* 404*/}
+                      {/* Not found */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </div>
