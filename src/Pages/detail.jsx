@@ -8,8 +8,10 @@ import {
 } from "../store/favoritesSlice";
 import { usePlanner } from "../context/PlannerContext";
 import { useToast } from "../context/ToastContext";
+import { filterMealsByCategory, getIngredientImageUrl, lookupMeal } from "../api/mealDb";
 import PlannerModal from "../components/PlannerModal";
 import RecipeCard from "../components/Recipecard";
+import LoadingStatus from "../components/LoadingStatus";
 import {
   FaHeart,
   FaRegHeart,
@@ -63,15 +65,10 @@ const RecipeDetails = () => {
         setTimerSeconds(0);
         setIsTimerRunning(false);
 
-        const response = await fetch(
-          `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch recipe");
-        }
-
-        const data = await response.json();
+        const data = await lookupMeal(id, {
+          checkStatus: true,
+          errorMessage: "Failed to fetch recipe",
+        });
 
         if (!data.meals || data.meals.length === 0) {
           setError("Recipe not found.");
@@ -99,10 +96,7 @@ const RecipeDetails = () => {
 
   async function fetchRelated(category, currentId) {
     try {
-      const res = await fetch(
-        `https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(category)}`
-      );
-      const data = await res.json();
+      const data = await filterMealsByCategory(category);
       if (data.meals) {
         const filtered = data.meals
           .filter((m) => m.idMeal !== currentId)
@@ -198,9 +192,7 @@ const RecipeDetails = () => {
     return rawIngredients.map((item) => ({
       ...item,
       scaledMeasure: scaleMeasure(item.measure, multiplier),
-      imageUrl: `https://www.themealdb.com/images/ingredients/${encodeURIComponent(
-        item.ingredient
-      )}-Small.png`,
+      imageUrl: getIngredientImageUrl(item.ingredient),
     }));
   }, [rawIngredients, multiplier]);
 
@@ -262,10 +254,13 @@ const RecipeDetails = () => {
   if (loading) {
     return (
       <main className="recipe-details-page">
-        <div className="recipe-details-status">
-          <div className="details-loader" />
+        <LoadingStatus
+          className="recipe-details-status"
+          spinnerClassName="details-loader"
+          ariaLabel="Preparing recipe details"
+        >
           <p>Preparing recipe details...</p>
-        </div>
+        </LoadingStatus>
       </main>
     );
   }

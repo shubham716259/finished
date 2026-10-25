@@ -4,6 +4,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { usePlanner, DAYS_OF_WEEK, MEAL_SLOTS } from "../context/PlannerContext";
 import { useToast } from "../context/ToastContext";
 import {
+  lookupMeal,
+  searchMealsByName,
+} from "../api/mealDb";
+import LoadingStatus from "../components/LoadingStatus";
+import {
   cacheRecipe,
   selectCachedRecipes,
   selectFavorites,
@@ -64,10 +69,7 @@ const MealPlanner = () => {
             if (cachedRecipes[id]) return cachedRecipes[id];
             if (typeof favItem === "object" && favItem.strMeal) return favItem;
             try {
-              const res = await fetch(
-                `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`
-              );
-              const data = await res.json();
+              const data = await lookupMeal(id);
               if (data.meals && data.meals[0]) {
                 dispatch(cacheRecipe(data.meals[0]));
                 return data.meals[0];
@@ -93,12 +95,7 @@ const MealPlanner = () => {
 
     setSearchLoading(true);
     try {
-      const res = await fetch(
-        `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(
-          searchQuery.trim()
-        )}`
-      );
-      const data = await res.json();
+      const data = await searchMealsByName(searchQuery.trim());
       setSearchResults(data.meals || []);
     } catch (e) {
       console.error(e);
@@ -121,10 +118,7 @@ const MealPlanner = () => {
     let pool = [...favoriteMeals];
     if (pool.length < 5) {
       try {
-        const res = await fetch(
-          "https://www.themealdb.com/api/json/v1/1/search.php?s=chicken"
-        );
-        const data = await res.json();
+        const data = await searchMealsByName("chicken");
         if (data.meals) pool = [...pool, ...data.meals];
       } catch (e) {
         console.error(e);
@@ -359,7 +353,9 @@ const MealPlanner = () => {
             {modalTab === "favorites" && (
               <div className="modal-tab-body">
                 {favLoading ? (
-                  <div className="modal-loader">Loading favorites...</div>
+                  <LoadingStatus className="modal-loader">
+                    Loading favorites...
+                  </LoadingStatus>
                 ) : favoriteMeals.length === 0 ? (
                   <EmptyState
                     className="modal-empty-state"
@@ -417,7 +413,9 @@ const MealPlanner = () => {
                 </form>
 
                 {searchLoading ? (
-                  <div className="modal-loader">Searching recipes...</div>
+                  <LoadingStatus className="modal-loader">
+                    Searching recipes...
+                  </LoadingStatus>
                 ) : searchResults.length > 0 ? (
                   <div className="modal-recipes-list">
                     {searchResults.map((recipe) => (

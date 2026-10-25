@@ -9,7 +9,9 @@ import {
   selectFavorites,
 } from "../store/favoritesSlice";
 import { useToast } from "../context/ToastContext";
+import { lookupMeal } from "../api/mealDb";
 import PlannerModal from "../components/PlannerModal";
+import LoadingStatus from "../components/LoadingStatus";
 import SearchInput from "../components/SearchInput";
 import EmptyState from "../components/EmptyState";
 import {
@@ -59,10 +61,7 @@ const Favorites = () => {
 
             // Fetch missing from API
             try {
-              const res = await fetch(
-                `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`
-              );
-              const data = await res.json();
+              const data = await lookupMeal(id);
               if (data.meals && data.meals[0]) {
                 dispatch(cacheRecipe(data.meals[0]));
                 return data.meals[0];
@@ -162,10 +161,13 @@ const Favorites = () => {
   if (loading && detailedFavorites.length === 0) {
     return (
       <main className="favorites-page">
-        <div className="favorites-status">
-          <div className="loader" />
+        <LoadingStatus
+          className="favorites-status"
+          spinnerClassName="loader"
+          ariaLabel="Loading your favorite collection"
+        >
           <p>Loading your favorite collection...</p>
-        </div>
+        </LoadingStatus>
       </main>
     );
   }

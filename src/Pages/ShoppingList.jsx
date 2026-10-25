@@ -2,7 +2,12 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { usePlanner } from "../context/PlannerContext";
 import { useToast } from "../context/ToastContext";
+<<<<<<< HEAD
 import EmptyState from "../components/EmptyState";
+=======
+import LoadingStatus from "../components/LoadingStatus";
+import { lookupMeal } from "../api/mealDb";
+>>>>>>> de3ad05a8106e511bcb4398515c7600188da72b4
 import {
   FaShoppingCart,
   FaCheck,
@@ -185,10 +190,7 @@ const ShoppingList = () => {
               return recipe;
             }
             try {
-              const res = await fetch(
-                `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${recipe.idMeal}`
-              );
-              const data = await res.json();
+              const data = await lookupMeal(recipe.idMeal);
               return data.meals?.[0] || recipe;
             } catch {
               return recipe;
@@ -349,10 +351,13 @@ const ShoppingList = () => {
   if (loading) {
     return (
       <main className="shopping-page">
-        <div className="shopping-loading">
-          <div className="shopping-loader" />
+        <LoadingStatus
+          className="shopping-loading"
+          spinnerClassName="shopping-loader"
+          ariaLabel="Compiling your weekly grocery list"
+        >
           <p>Compiling your weekly grocery list...</p>
-        </div>
+        </LoadingStatus>
       </main>
     );
   }

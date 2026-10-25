@@ -3,6 +3,11 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { selectIsFavorite, toggleFavorite } from "../store/favoritesSlice";
 import { useToast } from "../context/ToastContext";
+import {
+  filterMealsByCategory,
+  getRandomMeal as fetchRandomMeal,
+  lookupMeal,
+} from "../api/mealDb";
 import PlannerModal from "../components/PlannerModal";
 import {
   FaDice,
@@ -50,28 +55,23 @@ const SurpriseMe = () => {
       let data = null;
 
       if (selectedPreference === "Any") {
-        const response = await fetch(
-          "https://www.themealdb.com/api/json/v1/1/random.php"
-        );
-        if (!response.ok) throw new Error("Failed to fetch random meal");
-        data = await response.json();
+        data = await fetchRandomMeal({
+          checkStatus: true,
+          errorMessage: "Failed to fetch random meal",
+        });
       } else {
         // Fetch category list and pick random from it
-        const response = await fetch(
-          `https://www.themealdb.com/api/json/v1/1/filter.php?c=${selectedPreference}`
-        );
-        if (!response.ok) throw new Error("Failed to fetch category meals");
-        const catData = await response.json();
+        const catData = await filterMealsByCategory(selectedPreference, {
+          checkStatus: true,
+          errorMessage: "Failed to fetch category meals",
+        });
 
         if (catData.meals && catData.meals.length > 0) {
           const randomIndex = Math.floor(Math.random() * catData.meals.length);
           const picked = catData.meals[randomIndex];
 
           // Fetch full details
-          const detailRes = await fetch(
-            `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${picked.idMeal}`
-          );
-          data = await detailRes.json();
+          data = await lookupMeal(picked.idMeal);
         }
       }
 

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import RecipeCard from "../components/Recipecard";
+import LoadingStatus from "../components/LoadingStatus";
 import SearchInput from "../components/SearchInput";
-import EmptyState from "../components/EmptyState";
 import { FaSearch, FaFilter, FaGlobeAmericas, FaUtensils, FaPepperHot, FaLayerGroup, FaRedoAlt } from "react-icons/fa";
 import "../styles/recipe.css";
 
@@ -72,14 +72,6 @@ const POPULAR_INGREDIENTS = [
   "Avocado",
 ];
 
-async function fetchRecipeData(url) {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Recipe request failed with status ${response.status}`);
-  }
-  return response.json();
-}
-
 const Recipes = () => {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -114,7 +106,7 @@ const Recipes = () => {
       const initialCategories = ["Chicken", "Beef", "Pasta", "Vegetarian", "Seafood", "Dessert"];
       const responses = await Promise.all(
         initialCategories.map((cat) =>
-          fetchRecipeData(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${cat}`)
+          filterMealsByCategory(cat, { checkStatus: true })
         )
       );
 
@@ -148,18 +140,19 @@ const Recipes = () => {
     setError("");
 
     try {
-      let url = "";
+      const requestOptions = {
+        checkStatus: true,
+      };
+      let data;
       if (searchMode === "name") {
-        url = `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`;
+        data = await searchMealsByName(query, requestOptions);
       } else if (searchMode === "ingredient") {
-        url = `https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(query.toLowerCase())}`;
+        data = await filterMealsByIngredient(query.toLowerCase(), requestOptions);
       } else if (searchMode === "cuisine") {
-        url = `https://www.themealdb.com/api/json/v1/1/filter.php?a=${encodeURIComponent(query)}`;
+        data = await filterMealsByArea(query, requestOptions);
       } else if (searchMode === "category") {
-        url = `https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(query)}`;
+        data = await filterMealsByCategory(query, requestOptions);
       }
-
-      const data = await fetchRecipeData(url);
 
       if (!data.meals || data.meals.length === 0) {
         setRecipes([]);
@@ -193,9 +186,7 @@ const Recipes = () => {
     setLoading(true);
     setError("");
     try {
-      const data = await fetchRecipeData(
-        `https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(category)}`
-      );
+      const data = await filterMealsByCategory(category, { checkStatus: true });
       setRecipes(data.meals || []);
     } catch (err) {
       console.error(err);
@@ -222,9 +213,7 @@ const Recipes = () => {
     setLoading(true);
     setError("");
     try {
-      const data = await fetchRecipeData(
-        `https://www.themealdb.com/api/json/v1/1/filter.php?a=${encodeURIComponent(cuisine)}`
-      );
+      const data = await filterMealsByArea(cuisine, { checkStatus: true });
       setRecipes(data.meals || []);
     } catch (err) {
       console.error(err);
@@ -247,9 +236,9 @@ const Recipes = () => {
     setLoading(true);
     setError("");
     try {
-      const data = await fetchRecipeData(
-        `https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(ingredient.toLowerCase())}`
-      );
+      const data = await filterMealsByIngredient(ingredient.toLowerCase(), {
+        checkStatus: true,
+      });
       setRecipes(data.meals || []);
     } catch (err) {
       console.error(err);
@@ -524,7 +513,10 @@ const Recipes = () => {
           LOADING STATE
       ========================= */}
       {loading && (
-        <div className="recipe-grid skeleton-grid">
+        <LoadingStatus
+          className="recipe-grid skeleton-grid"
+          ariaLabel="Loading recipes"
+        >
           {Array.from({ length: itemsPerPage }).map((_, i) => (
             <div key={i} className="recipe-card-skeleton">
               <div className="skeleton-image" />
@@ -535,7 +527,7 @@ const Recipes = () => {
               </div>
             </div>
           ))}
-        </div>
+        </LoadingStatus>
       )}
 
       {/* =========================
