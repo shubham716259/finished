@@ -1,7 +1,13 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import RecipeCard from "../components/Recipecard";
 import LoadingStatus from "../components/LoadingStatus";
 import SearchInput from "../components/SearchInput";
+import {
+  filterMealsByArea,
+  filterMealsByCategory,
+  filterMealsByIngredient,
+  searchMealsByName,
+} from "../api/mealDb";
 import { FaSearch, FaFilter, FaGlobeAmericas, FaUtensils, FaPepperHot, FaLayerGroup, FaRedoAlt } from "react-icons/fa";
 import "../styles/recipe.css";
 
@@ -92,13 +98,10 @@ const Recipes = () => {
   const [infiniteLimit, setInfiniteLimit] = useState(12);
 
   const gridRef = useRef(null);
+  const retryRequestRef = useRef(null);
+  const retryInProgressRef = useRef(false);
 
-  // Load initial popular recipes on mount
-  useEffect(() => {
-    loadInitialRecipes();
-  }, []);
-
-  async function loadInitialRecipes() {
+  const loadInitialRecipes = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -123,8 +126,16 @@ const Recipes = () => {
       setError("Unable to load recipes. Please check your internet connection.");
     } finally {
       setLoading(false);
+      retryInProgressRef.current = false;
     }
-  }
+  }, []);
+
+  // Defer initial loading until after the initial render.
+  useEffect(() => {
+    retryRequestRef.current = loadInitialRecipes;
+    const timeoutId = setTimeout(loadInitialRecipes, 0);
+    return () => clearTimeout(timeoutId);
+  }, [loadInitialRecipes]);
 
   // Handle Search submit
   async function handleSearch(e) {
@@ -132,10 +143,12 @@ const Recipes = () => {
     const query = searchQuery.trim();
 
     if (!query) {
+      retryRequestRef.current = loadInitialRecipes;
       loadInitialRecipes();
       return;
     }
 
+    retryRequestRef.current = () => handleSearch();
     setLoading(true);
     setError("");
 
@@ -166,6 +179,7 @@ const Recipes = () => {
       setError("Failed to fetch recipes matching your search.");
     } finally {
       setLoading(false);
+      retryInProgressRef.current = false;
     }
   }
 
@@ -179,10 +193,12 @@ const Recipes = () => {
     setInfiniteLimit(12);
 
     if (category === "All") {
+      retryRequestRef.current = loadInitialRecipes;
       loadInitialRecipes();
       return;
     }
 
+    retryRequestRef.current = () => handleCategorySelect(category);
     setLoading(true);
     setError("");
     try {
@@ -193,6 +209,7 @@ const Recipes = () => {
       setError(`Unable to load ${category} recipes.`);
     } finally {
       setLoading(false);
+      retryInProgressRef.current = false;
     }
   }
 
@@ -206,10 +223,12 @@ const Recipes = () => {
     setInfiniteLimit(12);
 
     if (cuisine === "All") {
+      retryRequestRef.current = loadInitialRecipes;
       loadInitialRecipes();
       return;
     }
 
+    retryRequestRef.current = () => handleCuisineSelect(cuisine);
     setLoading(true);
     setError("");
     try {
@@ -220,6 +239,7 @@ const Recipes = () => {
       setError(`Unable to load ${cuisine} recipes.`);
     } finally {
       setLoading(false);
+      retryInProgressRef.current = false;
     }
   }
 
@@ -233,6 +253,7 @@ const Recipes = () => {
     setCurrentPage(1);
     setInfiniteLimit(12);
 
+    retryRequestRef.current = () => handleIngredientSelect(ingredient);
     setLoading(true);
     setError("");
     try {
@@ -245,7 +266,14 @@ const Recipes = () => {
       setError(`Unable to load recipes with ${ingredient}.`);
     } finally {
       setLoading(false);
+      retryInProgressRef.current = false;
     }
+  }
+
+  function handleRetry() {
+    if (loading || retryInProgressRef.current || !retryRequestRef.current) return;
+    retryInProgressRef.current = true;
+    retryRequestRef.current();
   }
 
   // Reset all filters
@@ -256,6 +284,7 @@ const Recipes = () => {
     setSelectedIngredient("");
     setSearchMode("name");
     setSortBy("featured");
+    retryRequestRef.current = loadInitialRecipes;
     loadInitialRecipes();
   }
 
@@ -536,7 +565,12 @@ const Recipes = () => {
       {!loading && error && (
         <div className="recipe-status error">
           <p>{error}</p>
-          <button type="button" onClick={loadInitialRecipes} className="retry-btn">
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="retry-btn"
+            disabled={loading}
+          >
             Try Again
           </button>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { selectIsFavorite, toggleFavorite } from "../store/favoritesSlice";
@@ -39,6 +39,7 @@ const SurpriseMe = () => {
   const [selectedPreference, setSelectedPreference] = useState("Any");
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [isRolling, setIsRolling] = useState(false);
+  const requestInFlightRef = useRef(false);
 
   const dispatch = useDispatch();
   const favorite = useSelector((state) =>
@@ -47,6 +48,8 @@ const SurpriseMe = () => {
   const { addToast } = useToast();
 
   async function getRandomMeal() {
+    if (requestInFlightRef.current) return;
+    requestInFlightRef.current = true;
     setLoading(true);
     setIsRolling(true);
     setError("");
@@ -85,12 +88,14 @@ const SurpriseMe = () => {
         }
         setLoading(false);
         setIsRolling(false);
+        requestInFlightRef.current = false;
       }, 650);
     } catch (err) {
       console.error(err);
       setError("Unable to find a surprise meal. Please check your internet connection.");
       setLoading(false);
       setIsRolling(false);
+      requestInFlightRef.current = false;
     }
   }
 
@@ -161,6 +166,14 @@ const SurpriseMe = () => {
       {error && (
         <div className="surprise-error-box">
           <p>{error}</p>
+          <button
+            type="button"
+            className="btn-spin-again"
+            onClick={getRandomMeal}
+            disabled={loading}
+          >
+            <FaRedoAlt /> Try Again
+          </button>
         </div>
       )}
 

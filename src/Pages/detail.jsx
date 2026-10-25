@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -42,6 +42,8 @@ const RecipeDetails = () => {
   const [error, setError] = useState("");
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [relatedRecipes, setRelatedRecipes] = useState([]);
+  const inFlightRecipeIdsRef = useRef(new Set());
+  const requestTokenRef = useRef(0);
 
   // Interactive Features
   const [servings, setServings] = useState(4); // Default 4 servings
@@ -54,47 +56,7 @@ const RecipeDetails = () => {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timerInputMinutes, setTimerInputMinutes] = useState(15);
 
-  // Fetch recipe
-  useEffect(() => {
-    async function fetchRecipe() {
-      try {
-        setLoading(true);
-        setError("");
-        setCheckedIngredients({});
-        setActiveStep(null);
-        setTimerSeconds(0);
-        setIsTimerRunning(false);
-
-        const data = await lookupMeal(id, {
-          checkStatus: true,
-          errorMessage: "Failed to fetch recipe",
-        });
-
-        if (!data.meals || data.meals.length === 0) {
-          setError("Recipe not found.");
-          return;
-        }
-
-        const meal = data.meals[0];
-        setRecipe(meal);
-        dispatch(cacheRecipe(meal));
-
-        // Fetch related recipes in same category
-        if (meal.strCategory) {
-          fetchRelated(meal.strCategory, meal.idMeal);
-        }
-      } catch (err) {
-        console.error(err);
-        setError("Unable to load recipe details.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchRecipe();
-  }, [id, dispatch]);
-
-  async function fetchRelated(category, currentId) {
+  const fetchRelated = useCallback(async (category, currentId) => {
     try {
       const data = await filterMealsByCategory(category);
       if (data.meals) {
@@ -106,7 +68,61 @@ const RecipeDetails = () => {
     } catch (e) {
       console.error("Failed to load related recipes", e);
     }
-  }
+  }, []);
+
+  const fetchRecipe = useCallback(async () => {
+    if (inFlightRecipeIdsRef.current.has(id)) return;
+
+    inFlightRecipeIdsRef.current.add(id);
+    const requestToken = ++requestTokenRef.current;
+    setLoading(true);
+    setError("");
+    setCheckedIngredients({});
+    setActiveStep(null);
+    setTimerSeconds(0);
+    setIsTimerRunning(false);
+
+    try {
+      const data = await lookupMeal(id, {
+        checkStatus: true,
+        errorMessage: "Failed to fetch recipe",
+      });
+
+      if (requestTokenRef.current !== requestToken) return;
+      if (!data.meals || data.meals.length === 0) {
+        setError("Recipe not found.");
+        return;
+      }
+
+      const meal = data.meals[0];
+      setRecipe(meal);
+      dispatch(cacheRecipe(meal));
+
+      if (meal.strCategory) {
+        fetchRelated(meal.strCategory, meal.idMeal);
+      }
+    } catch (err) {
+      console.error(err);
+      if (requestTokenRef.current === requestToken) {
+        setError("Unable to load recipe details.");
+      }
+    } finally {
+      inFlightRecipeIdsRef.current.delete(id);
+      if (requestTokenRef.current === requestToken) {
+        setLoading(false);
+      }
+    }
+  }, [id, dispatch, fetchRelated]);
+
+  useEffect(() => {
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) fetchRecipe();
+    });
+    return () => {
+      active = false;
+    };
+  }, [fetchRecipe]);
 
   // Timer countdown effect
   useEffect(() => {
@@ -270,6 +286,14 @@ const RecipeDetails = () => {
       <main className="recipe-details-page">
         <div className="recipe-details-status">
           <h2>{error || "Recipe not found"}</h2>
+          <button
+            type="button"
+            className="back-recipes-btn"
+            onClick={fetchRecipe}
+            disabled={loading}
+          >
+            Try Again
+          </button>
           <Link to="/recipes" className="back-recipes-btn">
             &larr; Back to Recipes
           </Link>
