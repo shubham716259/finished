@@ -25,6 +25,7 @@ import {
   FaClock,
 } from "react-icons/fa";
 import EmptyState from "../components/EmptyState";
+import RequestError from "../components/RequestError";
 import "../styles/planner.css";
 
 const EMPTY_DAY_MEALS = {
@@ -55,20 +56,26 @@ const MealPlanner = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
 
   // Loaded full favorite recipes
   const [favoriteRecipes, setFavoriteRecipes] = useState([]);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [favoritesError, setFavoritesError] = useState("");
+  const [favoritesRetryCount, setFavoritesRetryCount] = useState(0);
 
   // Load detailed objects for favorites modal
   useEffect(() => {
     async function loadFavs() {
       if (favorites.length === 0) {
         setFavoriteRecipes([]);
+        setFavoritesError("");
         return;
       }
       setFavoritesLoading(true);
+      setFavoritesError("");
       try {
+        let requestFailed = false;
         const list = await Promise.all(
           favorites.map(async (favItem) => {
             const id = typeof favItem === "object" ? favItem.idMeal : String(favItem);
@@ -80,19 +87,31 @@ const MealPlanner = () => {
                 dispatch(cacheRecipe(data.meals[0]));
                 return data.meals[0];
               }
+              requestFailed = true;
             } catch (e) {
               console.error(e);
+              requestFailed = true;
             }
             return null;
           })
         );
         setFavoriteRecipes(list.filter(Boolean));
+        if (requestFailed) {
+          setFavoritesError(
+            "Some saved recipes couldn't be loaded. Check your connection and try again."
+          );
+        }
+      } catch (e) {
+        console.error(e);
+        setFavoritesError(
+          "Couldn't load your saved recipes. Check your connection and try again."
+        );
       } finally {
         setFavoritesLoading(false);
       }
     }
     loadFavs();
-  }, [favorites, cachedRecipes, dispatch]);
+  }, [favorites, cachedRecipes, dispatch, favoritesRetryCount]);
 
   // Search recipes for planner modal
   async function handleModalSearch(e) {
@@ -101,12 +120,14 @@ const MealPlanner = () => {
     if (!query) return;
 
     setSearchLoading(true);
+    setSearchError("");
+    setSearchResults([]);
     try {
       const data = await searchMealsByName(query);
       setSearchResults(data.meals || []);
     } catch (e) {
       console.error(e);
-      addToast("Failed to search recipes", "error");
+      setSearchError("Couldn't search recipes. Check your connection and try again.");
     } finally {
       setSearchLoading(false);
     }
@@ -129,6 +150,10 @@ const MealPlanner = () => {
         if (data.meals) pool = [...pool, ...data.meals];
       } catch (e) {
         console.error(e);
+        addToast(
+          "Couldn't load additional recipes. Auto-plan will use saved favorites.",
+          "error"
+        );
       }
     }
     autoPlanWeek(pool);
@@ -360,6 +385,14 @@ const MealPlanner = () => {
                     Loading favorites...
                   </LoadingStatus>
                 ) : favoriteRecipes.length === 0 ? (
+                  favoritesError ? (
+                    <RequestError
+                      message={favoritesError}
+                      onRetry={() =>
+                        setFavoritesRetryCount((count) => count + 1)
+                      }
+                    />
+                  ) : (
                   <EmptyState
                     className="modal-empty-state"
                     title="No saved favorites yet"
@@ -373,30 +406,41 @@ const MealPlanner = () => {
                       Search for recipes instead &rarr;
                     </button>
                   </EmptyState>
+                  )
                 ) : (
-                  <div className="modal-recipes-list">
-                    {favoriteRecipes.map((recipe) => (
-                      <button
-                        key={recipe.idMeal}
-                        type="button"
-                        className="modal-recipe-item"
-                        onClick={() => handleSelectRecipeForSlot(recipe)}
-                      >
-                        <img
-                          src={recipe.strMealThumb}
-                          alt={recipe.strMeal}
-                          loading="lazy"
-                        />
-                        <div className="modal-item-info">
-                          <h4>{recipe.strMeal}</h4>
-                          <span>
-                            {recipe.strCategory} • {recipe.strArea || "Global"}
-                          </span>
-                        </div>
-                        <span className="select-badge">Select &rarr;</span>
-                      </button>
-                    ))}
-                  </div>
+                  <>
+                    {favoritesError && (
+                      <RequestError
+                        message={favoritesError}
+                        onRetry={() =>
+                          setFavoritesRetryCount((count) => count + 1)
+                        }
+                      />
+                    )}
+                    <div className="modal-recipes-list">
+                      {favoriteRecipes.map((recipe) => (
+                        <button
+                          key={recipe.idMeal}
+                          type="button"
+                          className="modal-recipe-item"
+                          onClick={() => handleSelectRecipeForSlot(recipe)}
+                        >
+                          <img
+                            src={recipe.strMealThumb}
+                            alt={recipe.strMeal}
+                            loading="lazy"
+                          />
+                          <div className="modal-item-info">
+                            <h4>{recipe.strMeal}</h4>
+                            <span>
+                              {recipe.strCategory} • {recipe.strArea || "Global"}
+                            </span>
+                          </div>
+                          <span className="select-badge">Select &rarr;</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -419,6 +463,11 @@ const MealPlanner = () => {
                   <LoadingStatus className="modal-loader">
                     Searching recipes...
                   </LoadingStatus>
+                ) : searchError ? (
+                  <RequestError
+                    message={searchError}
+                    onRetry={() => handleModalSearch()}
+                  />
                 ) : searchResults.length > 0 ? (
                   <div className="modal-recipes-list">
                     {searchResults.map((recipe) => (

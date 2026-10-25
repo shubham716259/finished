@@ -12,6 +12,7 @@ import { filterMealsByCategory, getIngredientImageUrl, lookupMeal } from "../api
 import PlannerModal from "../components/PlannerModal";
 import RecipeCard from "../components/Recipecard";
 import LoadingStatus from "../components/LoadingStatus";
+import RequestError from "../components/RequestError";
 import {
   FaHeart,
   FaRegHeart,
@@ -40,8 +41,11 @@ const RecipeDetails = () => {
   const favorite = useSelector((state) => selectIsFavorite(state, recipe?.idMeal));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [relatedRecipes, setRelatedRecipes] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
+  const [relatedError, setRelatedError] = useState("");
 
   // Interactive Features
   const [servings, setServings] = useState(4); // Default 4 servings
@@ -64,9 +68,11 @@ const RecipeDetails = () => {
         setActiveStep(null);
         setTimerSeconds(0);
         setIsTimerRunning(false);
+        setRelatedRecipes([]);
+        setRelatedError("");
+        setRelatedLoading(false);
 
         const data = await lookupMeal(id, {
-          checkStatus: true,
           errorMessage: "Failed to fetch recipe",
         });
 
@@ -92,9 +98,11 @@ const RecipeDetails = () => {
     }
 
     fetchRecipe();
-  }, [id, dispatch]);
+  }, [id, dispatch, retryCount]);
 
   async function fetchRelated(category, currentId) {
+    setRelatedLoading(true);
+    setRelatedError("");
     try {
       const data = await filterMealsByCategory(category);
       if (data.meals) {
@@ -105,6 +113,11 @@ const RecipeDetails = () => {
       }
     } catch (e) {
       console.error("Failed to load related recipes", e);
+      setRelatedError(
+        "Couldn't load related recipes. Check your connection and try again."
+      );
+    } finally {
+      setRelatedLoading(false);
     }
   }
 
@@ -269,7 +282,14 @@ const RecipeDetails = () => {
     return (
       <main className="recipe-details-page">
         <div className="recipe-details-status">
-          <h2>{error || "Recipe not found"}</h2>
+          <RequestError
+            message={
+              error === "Recipe not found."
+                ? error
+                : "Couldn't load recipe details. Check your connection and try again."
+            }
+            onRetry={() => setRetryCount((count) => count + 1)}
+          />
           <Link to="/recipes" className="back-recipes-btn">
             &larr; Back to Recipes
           </Link>
@@ -578,14 +598,25 @@ const RecipeDetails = () => {
       {/* =========================
           RELATED RECIPES CAROUSEL
       ========================= */}
-      {relatedRecipes.length > 0 && (
+      {(relatedLoading || relatedError || relatedRecipes.length > 0) && (
         <section className="related-recipes-section">
           <h2>More {recipe.strCategory} Recipes You Might Love</h2>
-          <div className="related-grid">
-            {relatedRecipes.map((rel) => (
-              <RecipeCard key={rel.idMeal} recipe={rel} />
-            ))}
-          </div>
+          {relatedLoading ? (
+            <LoadingStatus ariaLabel="Loading related recipes">
+              Loading related recipes...
+            </LoadingStatus>
+          ) : relatedError ? (
+            <RequestError
+              message={relatedError}
+              onRetry={() => fetchRelated(recipe.strCategory, recipe.idMeal)}
+            />
+          ) : (
+            <div className="related-grid">
+              {relatedRecipes.map((rel) => (
+                <RecipeCard key={rel.idMeal} recipe={rel} />
+              ))}
+            </div>
+          )}
         </section>
       )}
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { selectIsFavorite, toggleFavorite } from "../store/favoritesSlice";
@@ -9,6 +9,7 @@ import {
   lookupMeal,
 } from "../api/mealDb";
 import PlannerModal from "../components/PlannerModal";
+import RequestError from "../components/RequestError";
 import {
   FaDice,
   FaHeart,
@@ -50,19 +51,18 @@ const SurpriseMe = () => {
     setLoading(true);
     setIsRolling(true);
     setError("");
+    setMeal(null);
 
     try {
       let data = null;
 
       if (selectedPreference === "Any") {
         data = await fetchRandomMeal({
-          checkStatus: true,
           errorMessage: "Failed to fetch random meal",
         });
       } else {
         // Fetch category list and pick random from it
         const catData = await filterMealsByCategory(selectedPreference, {
-          checkStatus: true,
           errorMessage: "Failed to fetch category meals",
         });
 
@@ -78,7 +78,7 @@ const SurpriseMe = () => {
       // Add a slight animation delay for the rolling effect
       setTimeout(() => {
         if (!data || !data.meals || data.meals.length === 0) {
-          setError("Couldn't find a surprise meal. Please try again!");
+          setError("No meal was found. Try another category or spin again.");
         } else {
           setMeal(data.meals[0]);
           addToast("🎉 Found your mystery dish!", "success");
@@ -88,7 +88,7 @@ const SurpriseMe = () => {
       }, 650);
     } catch (err) {
       console.error(err);
-      setError("Unable to find a surprise meal. Please check your internet connection.");
+      setError("Couldn't load a surprise meal. Check your connection and try again.");
       setLoading(false);
       setIsRolling(false);
     }
@@ -159,9 +159,11 @@ const SurpriseMe = () => {
 
       {/* ERROR */}
       {error && (
-        <div className="surprise-error-box">
-          <p>{error}</p>
-        </div>
+        <RequestError
+          message={error}
+          onRetry={getRandomMeal}
+          className="surprise-error-box"
+        />
       )}
 
       {/* RESULT DISPLAY */}

@@ -12,6 +12,7 @@ import { useToast } from "../context/ToastContext";
 import { lookupMeal } from "../api/mealDb";
 import PlannerModal from "../components/PlannerModal";
 import LoadingStatus from "../components/LoadingStatus";
+import RequestError from "../components/RequestError";
 import SearchInput from "../components/SearchInput";
 import EmptyState from "../components/EmptyState";
 import {
@@ -32,6 +33,8 @@ const Favorites = () => {
 
   const [detailedFavorites, setDetailedFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingError, setLoadingError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [activePlanRecipe, setActivePlanRecipe] = useState(null);
@@ -41,12 +44,15 @@ const Favorites = () => {
     async function loadDetails() {
       if (favorites.length === 0) {
         setDetailedFavorites([]);
+        setLoadingError("");
         setLoading(false);
         return;
       }
 
       setLoading(true);
+      setLoadingError("");
       try {
+        let requestFailed = false;
         const results = await Promise.all(
           favorites.map(async (favItem) => {
             const id = typeof favItem === "object" ? favItem.idMeal : String(favItem);
@@ -66,23 +72,33 @@ const Favorites = () => {
                 dispatch(cacheRecipe(data.meals[0]));
                 return data.meals[0];
               }
+              requestFailed = true;
             } catch (err) {
               console.error("Error loading favorite item details", err);
+              requestFailed = true;
             }
             return null;
           })
         );
 
         setDetailedFavorites(results.filter(Boolean));
+        if (requestFailed) {
+          setLoadingError(
+            "Some saved recipes couldn't be loaded. Check your connection and try again."
+          );
+        }
       } catch (err) {
         console.error("Failed to load favorites", err);
+        setLoadingError(
+          "Couldn't load your saved recipes. Check your connection and try again."
+        );
       } finally {
         setLoading(false);
       }
     }
 
     loadDetails();
-  }, [favorites, cachedRecipes, dispatch]);
+  }, [favorites, cachedRecipes, dispatch, retryCount]);
 
   const handleClearFavorites = () => {
     dispatch(clearFavorites());
@@ -203,6 +219,14 @@ const Favorites = () => {
         )}
       </section>
 
+      {loadingError && (
+        <RequestError
+          message={loadingError}
+          onRetry={() => setRetryCount((count) => count + 1)}
+          className="favorites-load-error"
+        />
+      )}
+
       {/* FILTER & SEARCH */}
       {detailedFavorites.length > 0 && (
         <div className="favorites-search-bar-row">
@@ -232,7 +256,7 @@ const Favorites = () => {
       )}
 
       {/* FAVORITES GRID / EMPTY */}
-      {detailedFavorites.length === 0 ? (
+      {favorites.length === 0 ? (
         <EmptyState
           className="empty-favorites"
           icon="♡"
@@ -244,7 +268,7 @@ const Favorites = () => {
             Explore Recipes &rarr;
           </Link>
         </EmptyState>
-      ) : filteredFavorites.length === 0 ? (
+      ) : detailedFavorites.length === 0 ? null : filteredFavorites.length === 0 ? (
         <EmptyState
           className="empty-favorites"
           icon="🔍"

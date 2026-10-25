@@ -1,7 +1,15 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import RecipeCard from "../components/Recipecard";
 import LoadingStatus from "../components/LoadingStatus";
+import RequestError from "../components/RequestError";
 import SearchInput from "../components/SearchInput";
+import EmptyState from "../components/EmptyState";
+import {
+  filterMealsByArea,
+  filterMealsByCategory,
+  filterMealsByIngredient,
+  searchMealsByName,
+} from "../api/mealDb";
 import { FaSearch, FaFilter, FaGlobeAmericas, FaUtensils, FaPepperHot, FaLayerGroup, FaRedoAlt } from "react-icons/fa";
 import "../styles/recipe.css";
 
@@ -76,6 +84,7 @@ const Recipes = () => {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [retryAction, setRetryAction] = useState(null);
 
   // Search modes: 'name' | 'ingredient' | 'cuisine' | 'category'
   const [searchMode, setSearchMode] = useState("name");
@@ -94,11 +103,7 @@ const Recipes = () => {
   const gridRef = useRef(null);
 
   // Load initial popular recipes on mount
-  useEffect(() => {
-    loadInitialRecipes();
-  }, []);
-
-  async function loadInitialRecipes() {
+  const loadInitialRecipes = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -106,7 +111,7 @@ const Recipes = () => {
       const initialCategories = ["Chicken", "Beef", "Pasta", "Vegetarian", "Seafood", "Dessert"];
       const responses = await Promise.all(
         initialCategories.map((cat) =>
-          filterMealsByCategory(cat, { checkStatus: true })
+          filterMealsByCategory(cat)
         )
       );
 
@@ -120,11 +125,16 @@ const Recipes = () => {
       setInfiniteLimit(12);
     } catch (err) {
       console.error(err);
-      setError("Unable to load recipes. Please check your internet connection.");
+      setError("Couldn't load recipes. Check your connection and try again.");
+      setRetryAction(() => loadInitialRecipes);
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    loadInitialRecipes();
+  }, [loadInitialRecipes]);
 
   // Handle Search submit
   async function handleSearch(e) {
@@ -140,18 +150,15 @@ const Recipes = () => {
     setError("");
 
     try {
-      const requestOptions = {
-        checkStatus: true,
-      };
       let data;
       if (searchMode === "name") {
-        data = await searchMealsByName(query, requestOptions);
+        data = await searchMealsByName(query);
       } else if (searchMode === "ingredient") {
-        data = await filterMealsByIngredient(query.toLowerCase(), requestOptions);
+        data = await filterMealsByIngredient(query.toLowerCase());
       } else if (searchMode === "cuisine") {
-        data = await filterMealsByArea(query, requestOptions);
+        data = await filterMealsByArea(query);
       } else if (searchMode === "category") {
-        data = await filterMealsByCategory(query, requestOptions);
+        data = await filterMealsByCategory(query);
       }
 
       if (!data.meals || data.meals.length === 0) {
@@ -163,7 +170,8 @@ const Recipes = () => {
       setInfiniteLimit(12);
     } catch (err) {
       console.error(err);
-      setError("Failed to fetch recipes matching your search.");
+      setError("Couldn't load search results. Check your connection and try again.");
+      setRetryAction(() => () => handleSearch());
     } finally {
       setLoading(false);
     }
@@ -186,11 +194,12 @@ const Recipes = () => {
     setLoading(true);
     setError("");
     try {
-      const data = await filterMealsByCategory(category, { checkStatus: true });
+      const data = await filterMealsByCategory(category);
       setRecipes(data.meals || []);
     } catch (err) {
       console.error(err);
-      setError(`Unable to load ${category} recipes.`);
+      setError(`Couldn't load ${category} recipes. Check your connection and try again.`);
+      setRetryAction(() => () => handleCategorySelect(category));
     } finally {
       setLoading(false);
     }
@@ -213,11 +222,12 @@ const Recipes = () => {
     setLoading(true);
     setError("");
     try {
-      const data = await filterMealsByArea(cuisine, { checkStatus: true });
+      const data = await filterMealsByArea(cuisine);
       setRecipes(data.meals || []);
     } catch (err) {
       console.error(err);
-      setError(`Unable to load ${cuisine} recipes.`);
+      setError(`Couldn't load ${cuisine} recipes. Check your connection and try again.`);
+      setRetryAction(() => () => handleCuisineSelect(cuisine));
     } finally {
       setLoading(false);
     }
@@ -236,13 +246,12 @@ const Recipes = () => {
     setLoading(true);
     setError("");
     try {
-      const data = await filterMealsByIngredient(ingredient.toLowerCase(), {
-        checkStatus: true,
-      });
+      const data = await filterMealsByIngredient(ingredient.toLowerCase());
       setRecipes(data.meals || []);
     } catch (err) {
       console.error(err);
-      setError(`Unable to load recipes with ${ingredient}.`);
+      setError(`Couldn't load recipes with ${ingredient}. Check your connection and try again.`);
+      setRetryAction(() => () => handleIngredientSelect(ingredient));
     } finally {
       setLoading(false);
     }
@@ -534,12 +543,11 @@ const Recipes = () => {
           ERROR STATE
       ========================= */}
       {!loading && error && (
-        <div className="recipe-status error">
-          <p>{error}</p>
-          <button type="button" onClick={loadInitialRecipes} className="retry-btn">
-            Try Again
-          </button>
-        </div>
+        <RequestError
+          message={error}
+          onRetry={retryAction || loadInitialRecipes}
+          className="recipe-status error"
+        />
       )}
 
       {/* =========================
