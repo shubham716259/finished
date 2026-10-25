@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import RecipeCard from "../components/Recipecard";
+import SearchInput from "../components/SearchInput";
 import { FaSearch, FaFilter, FaGlobeAmericas, FaUtensils, FaPepperHot, FaLayerGroup, FaRedoAlt } from "react-icons/fa";
 import "../styles/recipe.css";
 
@@ -357,32 +358,23 @@ const Recipes = () => {
       ========================= */}
       <div className="search-controls-wrapper">
         <form className="recipe-search-enhanced" onSubmit={handleSearch}>
-          <div className="search-input-group">
-            <FaSearch className="search-input-icon" />
-            <input
-              type="text"
-              placeholder={
-                searchMode === "name"
-                  ? "Search by recipe name (e.g. Pasta, Curry, Pie, Burger)..."
-                  : searchMode === "ingredient"
-                  ? "Search by ingredient (e.g. Chicken, Garlic, Avocado, Cheese)..."
-                  : searchMode === "cuisine"
-                  ? "Search by cuisine (e.g. Italian, Mexican, Indian, Japanese)..."
-                  : "Search by category (e.g. Seafood, Dessert, Vegetarian)..."
-              }
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                className="clear-search-btn"
-                onClick={() => setSearchQuery("")}
-              >
-                ×
-              </button>
-            )}
-          </div>
+          <SearchInput
+            wrapperClassName="search-input-group"
+            iconClassName="search-input-icon"
+            ariaLabel="Search recipes"
+            placeholder={
+              searchMode === "name"
+                ? "Search by recipe name (e.g. Pasta, Curry, Pie, Burger)..."
+                : searchMode === "ingredient"
+                ? "Search by ingredient (e.g. Chicken, Garlic, Avocado, Cheese)..."
+                : searchMode === "cuisine"
+                ? "Search by cuisine (e.g. Italian, Mexican, Indian, Japanese)..."
+                : "Search by category (e.g. Seafood, Dessert, Vegetarian)..."
+            }
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onClear={() => setSearchQuery("")}
+          />
           <button type="submit" className="search-submit-btn">
             Search
           </button>
