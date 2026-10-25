@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { FaLock, FaKey, FaEnvelope, FaCheckCircle, FaArrowLeft } from "react-icons/fa";
+import FormField from "../components/FormField";
 import "../styles/forgotPassword.css";
 
 const ForgotPassword = () => {
@@ -12,6 +13,9 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [newPasswordError, setNewPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
@@ -20,10 +24,13 @@ const ForgotPassword = () => {
   // Step 1: Verify Email
   const handleVerifyEmail = (e) => {
     e.preventDefault();
+    setEmailError("");
     const cleanEmail = email.trim().toLowerCase();
 
     if (!cleanEmail) {
-      setMessage("Please enter your registered email.");
+      const error = "Please enter your registered email.";
+      setEmailError(error);
+      setMessage(error);
       setMessageType("error");
       return;
     }
@@ -31,7 +38,9 @@ const ForgotPassword = () => {
     const stored = JSON.parse(localStorage.getItem("signupData") || "null");
 
     if (!stored || stored.email !== cleanEmail) {
-      setMessage("No account found with this email address. Please check and try again.");
+      const error = "No account found with this email address. Please check and try again.";
+      setEmailError(error);
+      setMessage(error);
       setMessageType("error");
       return;
     }
@@ -45,21 +54,30 @@ const ForgotPassword = () => {
   // Step 2: Update Password
   const handleResetPassword = (e) => {
     e.preventDefault();
+    setNewPasswordError("");
+    setConfirmPasswordError("");
 
     if (!newPassword || !confirmPassword) {
-      setMessage("Please fill in both password fields.");
+      const error = "Please fill in both password fields.";
+      if (!newPassword) setNewPasswordError(error);
+      if (!confirmPassword) setConfirmPasswordError(error);
+      setMessage(error);
       setMessageType("error");
       return;
     }
 
     if (newPassword.length < 6) {
-      setMessage("Password must be at least 6 characters long.");
+      const error = "Password must be at least 6 characters long.";
+      setNewPasswordError(error);
+      setMessage(error);
       setMessageType("error");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setMessage("Passwords do not match.");
+      const error = "Passwords do not match.";
+      setConfirmPasswordError(error);
+      setMessage(error);
       setMessageType("error");
       return;
     }
@@ -123,19 +141,24 @@ const ForgotPassword = () => {
         {/* Step 1: Email Form */}
         {step === 1 && (
           <form onSubmit={handleVerifyEmail}>
-            <label htmlFor="forgot-email">Registered Email Address</label>
-            <div className="input-group">
-              <FaEnvelope className="input-icon" />
-              <input
-                id="forgot-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g. chef@cookfusion.com"
-                autoComplete="email"
-                autoFocus
-              />
-            </div>
+            <FormField
+              id="forgot-email"
+              label="Registered Email Address"
+              type="email"
+              name="email"
+              aria-required="true"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setEmailError("");
+              }}
+              placeholder="e.g. chef@cookfusion.com"
+              autoComplete="email"
+              autoFocus
+              error={emailError}
+              inputWrapperClassName="input-group"
+              inputPrefix={<FaEnvelope className="input-icon" />}
+            />
 
             <button type="submit" className="forgot-submit-btn">
               Verify Account
@@ -146,32 +169,42 @@ const ForgotPassword = () => {
         {/* Step 2: New Password Form */}
         {step === 2 && (
           <form onSubmit={handleResetPassword}>
-            <label htmlFor="new-password">New Password</label>
-            <div className="input-group">
-              <FaKey className="input-icon" />
-              <input
-                id="new-password"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password (min. 6 characters)"
-                autoComplete="new-password"
-                autoFocus
-              />
-            </div>
+            <FormField
+              id="new-password"
+              label="New Password"
+              type="password"
+              name="new-password"
+              aria-required="true"
+              value={newPassword}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+                setNewPasswordError("");
+              }}
+              placeholder="Enter new password (min. 6 characters)"
+              autoComplete="new-password"
+              autoFocus
+              error={newPasswordError}
+              inputWrapperClassName="input-group"
+              inputPrefix={<FaKey className="input-icon" />}
+            />
 
-            <label htmlFor="confirm-new-password">Confirm New Password</label>
-            <div className="input-group">
-              <FaLock className="input-icon" />
-              <input
-                id="confirm-new-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter your new password"
-                autoComplete="new-password"
-              />
-            </div>
+            <FormField
+              id="confirm-new-password"
+              label="Confirm New Password"
+              type="password"
+              name="confirm-new-password"
+              aria-required="true"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                setConfirmPasswordError("");
+              }}
+              placeholder="Re-enter your new password"
+              autoComplete="new-password"
+              error={confirmPasswordError}
+              inputWrapperClassName="input-group"
+              inputPrefix={<FaLock className="input-icon" />}
+            />
 
             <button type="submit" className="forgot-submit-btn">
               Update Password
