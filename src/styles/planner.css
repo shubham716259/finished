@@ -130,6 +130,32 @@
   color: #fff;
 }
 
+.planner-empty-state {
+  max-width: 1100px;
+  margin: 0 auto 24px;
+  padding: 22px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+}
+
+.planner-empty-state > div {
+  color: #ff914d;
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.planner-empty-state h2 {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+.planner-empty-state p {
+  color: #9ea2b2;
+  margin: 0;
+}
+
 /* ========================================
    WEEKLY 7-DAY MULTI-SLOT GRID
 ======================================== */

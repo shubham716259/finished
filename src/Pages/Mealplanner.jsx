@@ -24,6 +24,7 @@ import {
   FaUtensils,
   FaClock,
 } from "react-icons/fa";
+import EmptyState from "../components/EmptyState";
 import "../styles/planner.css";
 
 const MealPlanner = () => {
@@ -192,6 +193,15 @@ const MealPlanner = () => {
         </div>
       </section>
 
+      {totalPlannedCount === 0 && (
+        <EmptyState
+          className="planner-empty-state"
+          icon={<FaCalendarAlt />}
+          title="Your week is unplanned"
+          description="Choose a meal slot below to add a recipe, or use Auto-Plan Week to fill your schedule."
+        />
+      )}
+
       {/* =========================
           WEEKLY PLANNER GRID
       ========================= */}
@@ -347,8 +357,11 @@ const MealPlanner = () => {
                     Loading favorites...
                   </LoadingStatus>
                 ) : favoriteMeals.length === 0 ? (
-                  <div className="modal-empty-state">
-                    <p>You have no saved favorites yet.</p>
+                  <EmptyState
+                    className="modal-empty-state"
+                    title="No saved favorites yet"
+                    description="Save recipes to your favorites, or search for a recipe to plan a meal."
+                  >
                     <button
                       type="button"
                       className="btn-switch-tab"
@@ -356,7 +369,7 @@ const MealPlanner = () => {
                     >
                       Search for recipes instead &rarr;
                     </button>
-                  </div>
+                  </EmptyState>
                 ) : (
                   <div className="modal-recipes-list">
                     {favoriteMeals.map((recipe) => (
@@ -428,9 +441,11 @@ const MealPlanner = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="modal-empty-state">
-                    <p>Type a dish or ingredient name above and press Search.</p>
-                  </div>
+                  <EmptyState
+                    className="modal-empty-state"
+                    title="Find a recipe to plan"
+                    description="Type a dish or ingredient name above and press Search."
+                  />
                 )}
               </div>
             )}

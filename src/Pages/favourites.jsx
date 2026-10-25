@@ -13,6 +13,7 @@ import { lookupMeal } from "../api/mealDb";
 import PlannerModal from "../components/PlannerModal";
 import LoadingStatus from "../components/LoadingStatus";
 import SearchInput from "../components/SearchInput";
+import EmptyState from "../components/EmptyState";
 import {
   FaHeart,
   FaTrash,
@@ -232,22 +233,25 @@ const Favorites = () => {
 
       {/* FAVORITES GRID / EMPTY */}
       {detailedFavorites.length === 0 ? (
-        <div className="empty-favorites">
-          <div className="empty-icon">♡</div>
-          <h2>No Saved Recipes Yet</h2>
-          <p>
-            Explore our vast recipe collection and click the heart icon on any
-            dish to save it to your personal favorites.
-          </p>
+        <EmptyState
+          className="empty-favorites"
+          icon="♡"
+          iconClassName="empty-icon"
+          title="No Saved Recipes Yet"
+          description="Explore our vast recipe collection and click the heart icon on any dish to save it to your personal favorites."
+        >
           <Link to="/recipes" className="browse-recipes-btn">
             Explore Recipes &rarr;
           </Link>
-        </div>
+        </EmptyState>
       ) : filteredFavorites.length === 0 ? (
-        <div className="empty-favorites">
-          <div className="empty-icon">🔍</div>
-          <h2>No Matching Favorites</h2>
-          <p>Try clearing your search query or choosing another category filter.</p>
+        <EmptyState
+          className="empty-favorites"
+          icon="🔍"
+          iconClassName="empty-icon"
+          title="No Matching Favorites"
+          description="Try clearing your search query or choosing another category filter."
+        >
           <button
             type="button"
             className="browse-recipes-btn"
@@ -258,7 +262,7 @@ const Favorites = () => {
           >
             Reset Filters
           </button>
-        </div>
+        </EmptyState>
       ) : (
         <section className="favorites-grid">
           {filteredFavorites.map((recipe) => (

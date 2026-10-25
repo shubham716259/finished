@@ -2,12 +2,6 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import RecipeCard from "../components/Recipecard";
 import LoadingStatus from "../components/LoadingStatus";
 import SearchInput from "../components/SearchInput";
-import {
-  filterMealsByArea,
-  filterMealsByCategory,
-  filterMealsByIngredient,
-  searchMealsByName,
-} from "../api/mealDb";
 import { FaSearch, FaFilter, FaGlobeAmericas, FaUtensils, FaPepperHot, FaLayerGroup, FaRedoAlt } from "react-icons/fa";
 import "../styles/recipe.css";
 
@@ -560,14 +554,18 @@ const Recipes = () => {
               ))}
             </section>
           ) : (
-            <div className="no-recipes-found-box">
-              <div className="empty-emoji">🍳</div>
-              <h3>No matching recipes found</h3>
-              <p>Try refining your search term, picking a different category, or clearing your filters.</p>
+            <EmptyState
+              className="no-recipes-found-box"
+              icon="🍳"
+              iconClassName="empty-emoji"
+              title="No matching recipes found"
+              titleAs="h3"
+              description="Try refining your search term, picking a different category, or clearing your filters."
+            >
               <button type="button" className="btn-explore-reset" onClick={handleResetFilters}>
                 Browse All Recipes
               </button>
-            </div>
+            </EmptyState>
           )}
 
           {/* =========================
