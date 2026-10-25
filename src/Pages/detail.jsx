@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -41,11 +41,12 @@ const RecipeDetails = () => {
   const favorite = useSelector((state) => selectIsFavorite(state, recipe?.idMeal));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [retryCount, setRetryCount] = useState(0);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [relatedRecipes, setRelatedRecipes] = useState([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
   const [relatedError, setRelatedError] = useState("");
+  const inFlightRecipeIdsRef = useRef(new Set());
+  const requestTokenRef = useRef(0);
 
   // Interactive Features
   const [servings, setServings] = useState(4); // Default 4 servings
@@ -58,53 +59,12 @@ const RecipeDetails = () => {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timerInputMinutes, setTimerInputMinutes] = useState(15);
 
-  // Fetch recipe
-  useEffect(() => {
-    async function fetchRecipe() {
-      try {
-        setLoading(true);
-        setError("");
-        setCheckedIngredients({});
-        setActiveStep(null);
-        setTimerSeconds(0);
-        setIsTimerRunning(false);
-        setRelatedRecipes([]);
-        setRelatedError("");
-        setRelatedLoading(false);
-
-        const data = await lookupMeal(id, {
-          errorMessage: "Failed to fetch recipe",
-        });
-
-        if (!data.meals || data.meals.length === 0) {
-          setError("Recipe not found.");
-          return;
-        }
-
-        const meal = data.meals[0];
-        setRecipe(meal);
-        dispatch(cacheRecipe(meal));
-
-        // Fetch related recipes in same category
-        if (meal.strCategory) {
-          fetchRelated(meal.strCategory, meal.idMeal);
-        }
-      } catch (err) {
-        console.error(err);
-        setError("Unable to load recipe details.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchRecipe();
-  }, [id, dispatch, retryCount]);
-
-  async function fetchRelated(category, currentId) {
+  const fetchRelated = useCallback(async (category, currentId, requestToken) => {
     setRelatedLoading(true);
     setRelatedError("");
     try {
       const data = await filterMealsByCategory(category);
+      if (requestTokenRef.current !== requestToken) return;
       if (data.meals) {
         const filtered = data.meals
           .filter((m) => m.idMeal !== currentId)
@@ -112,14 +72,75 @@ const RecipeDetails = () => {
         setRelatedRecipes(filtered);
       }
     } catch (e) {
+      if (requestTokenRef.current !== requestToken) return;
       console.error("Failed to load related recipes", e);
       setRelatedError(
         "Couldn't load related recipes. Check your connection and try again."
       );
     } finally {
-      setRelatedLoading(false);
+      if (requestTokenRef.current === requestToken) {
+        setRelatedLoading(false);
+      }
     }
-  }
+  }, []);
+
+  const fetchRecipe = useCallback(async () => {
+    if (inFlightRecipeIdsRef.current.has(id)) return;
+
+    inFlightRecipeIdsRef.current.add(id);
+    const requestToken = ++requestTokenRef.current;
+    setLoading(true);
+    setError("");
+    setCheckedIngredients({});
+    setActiveStep(null);
+    setTimerSeconds(0);
+    setIsTimerRunning(false);
+    setRelatedRecipes([]);
+    setRelatedError("");
+    setRelatedLoading(false);
+
+    try {
+      const data = await lookupMeal(id, {
+        checkStatus: true,
+        errorMessage: "Failed to fetch recipe",
+      });
+
+      if (requestTokenRef.current !== requestToken) return;
+      if (!data.meals || data.meals.length === 0) {
+        setError("Recipe not found.");
+        return;
+      }
+
+      const meal = data.meals[0];
+      setRecipe(meal);
+      dispatch(cacheRecipe(meal));
+
+      if (meal.strCategory) {
+        fetchRelated(meal.strCategory, meal.idMeal, requestToken);
+      }
+    } catch (err) {
+      console.error(err);
+      if (requestTokenRef.current === requestToken) {
+        setError("Unable to load recipe details.");
+      }
+    } finally {
+      inFlightRecipeIdsRef.current.delete(id);
+      if (requestTokenRef.current === requestToken) {
+        setLoading(false);
+      }
+    }
+  }, [id, dispatch, fetchRelated]);
+
+  useEffect(() => {
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) fetchRecipe();
+    });
+    return () => {
+      active = false;
+      requestTokenRef.current += 1;
+    };
+  }, [fetchRecipe]);
 
   // Timer countdown effect
   useEffect(() => {
@@ -288,7 +309,7 @@ const RecipeDetails = () => {
                 ? error
                 : "Couldn't load recipe details. Check your connection and try again."
             }
-            onRetry={() => setRetryCount((count) => count + 1)}
+            onRetry={fetchRecipe}
           />
           <Link to="/recipes" className="back-recipes-btn">
             &larr; Back to Recipes

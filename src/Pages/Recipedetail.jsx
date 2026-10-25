@@ -103,8 +103,8 @@ const Recipes = () => {
 
   const gridRef = useRef(null);
   const requestIdRef = useRef(0);
+  const retryInProgressRef = useRef(false);
 
-  // Load initial popular recipes on mount
   const loadInitialRecipes = useCallback(async () => {
     const requestId = ++requestIdRef.current;
     setLoading(true);
@@ -137,12 +137,17 @@ const Recipes = () => {
     } finally {
       if (requestId === requestIdRef.current) {
         setLoading(false);
+        retryInProgressRef.current = false;
       }
     }
   }, []);
 
   useEffect(() => {
-    loadInitialRecipes();
+    const timeoutId = setTimeout(loadInitialRecipes, 0);
+    return () => {
+      clearTimeout(timeoutId);
+      requestIdRef.current += 1;
+    };
   }, [loadInitialRecipes]);
 
   // Handle Search submit
@@ -194,6 +199,7 @@ const Recipes = () => {
     } finally {
       if (requestId === requestIdRef.current) {
         setLoading(false);
+        retryInProgressRef.current = false;
       }
     }
   }
@@ -228,6 +234,7 @@ const Recipes = () => {
     } finally {
       if (requestId === requestIdRef.current) {
         setLoading(false);
+        retryInProgressRef.current = false;
       }
     }
   }
@@ -262,6 +269,7 @@ const Recipes = () => {
     } finally {
       if (requestId === requestIdRef.current) {
         setLoading(false);
+        retryInProgressRef.current = false;
       }
     }
   }
@@ -292,8 +300,15 @@ const Recipes = () => {
     } finally {
       if (requestId === requestIdRef.current) {
         setLoading(false);
+        retryInProgressRef.current = false;
       }
     }
+  }
+
+  function handleRetry() {
+    if (loading || retryInProgressRef.current || !retryAction) return;
+    retryInProgressRef.current = true;
+    retryAction();
   }
 
   // Reset all filters
@@ -599,7 +614,7 @@ const Recipes = () => {
       {!loading && error && (
         <RequestError
           message={error}
-          onRetry={retryAction || loadInitialRecipes}
+          onRetry={handleRetry}
           className="recipe-status error"
         />
       )}
