@@ -330,6 +330,12 @@ const Recipes = () => {
     retryAction();
   }
 
+  function handleSortChange(value) {
+    setSortBy(value);
+    setCurrentPage(1);
+    setInfiniteLimit(12);
+  }
+
   // Reset all filters
   function handleResetFilters() {
     setSearchQuery("");
@@ -350,10 +356,18 @@ const Recipes = () => {
   const processedRecipes = useMemo(() => {
     let result = [...recipes];
 
-    if (sortBy === "az") {
-      result.sort((a, b) => a.strMeal.localeCompare(b.strMeal));
-    } else if (sortBy === "za") {
-      result.sort((a, b) => b.strMeal.localeCompare(a.strMeal));
+    if (sortBy === "az" || sortBy === "za") {
+      const direction = sortBy === "az" ? 1 : -1;
+      result.sort((a, b) => {
+        const nameOrder = a.strMeal.localeCompare(b.strMeal, "en", {
+          sensitivity: "base",
+          numeric: true,
+        });
+        if (nameOrder !== 0) return nameOrder * direction;
+        if (a.idMeal < b.idMeal) return -1;
+        if (a.idMeal > b.idMeal) return 1;
+        return 0;
+      });
     }
 
     return result;
@@ -494,8 +508,8 @@ const Recipes = () => {
             <label>
               <FaLayerGroup /> Sort By:
             </label>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="featured">Featured / Popular</option>
+            <select value={sortBy} onChange={(e) => handleSortChange(e.target.value)}>
+              <option value="featured">Source order</option>
               <option value="az">Name: A to Z</option>
               <option value="za">Name: Z to A</option>
             </select>
