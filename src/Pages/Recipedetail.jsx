@@ -101,11 +101,14 @@ const Recipes = () => {
   const [infiniteLimit, setInfiniteLimit] = useState(12);
 
   const gridRef = useRef(null);
+  const requestIdRef = useRef(0);
 
   // Load initial popular recipes on mount
   const loadInitialRecipes = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError("");
+    setRetryAction(null);
     try {
       // Fetch diverse categories to build an impressive initial pool
       const initialCategories = ["Chicken", "Beef", "Pasta", "Vegetarian", "Seafood", "Dessert"];
@@ -114,6 +117,8 @@ const Recipes = () => {
           filterMealsByCategory(cat)
         )
       );
+
+      if (requestId !== requestIdRef.current) return;
 
       const allMeals = responses.flatMap((data) => data.meals || []);
       const uniqueMeals = Array.from(
@@ -124,11 +129,14 @@ const Recipes = () => {
       setCurrentPage(1);
       setInfiniteLimit(12);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error(err);
       setError("Couldn't load recipes. Check your connection and try again.");
       setRetryAction(() => loadInitialRecipes);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -146,8 +154,10 @@ const Recipes = () => {
       return;
     }
 
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError("");
+    setRetryAction(null);
 
     try {
       let data;
@@ -161,6 +171,8 @@ const Recipes = () => {
         data = await filterMealsByCategory(query);
       }
 
+      if (requestId !== requestIdRef.current) return;
+
       if (!data.meals || data.meals.length === 0) {
         setRecipes([]);
       } else {
@@ -169,11 +181,14 @@ const Recipes = () => {
       setCurrentPage(1);
       setInfiniteLimit(12);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error(err);
       setError("Couldn't load search results. Check your connection and try again.");
       setRetryAction(() => () => handleSearch());
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }
 
@@ -191,17 +206,23 @@ const Recipes = () => {
       return;
     }
 
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError("");
+    setRetryAction(null);
     try {
       const data = await filterMealsByCategory(category);
+      if (requestId !== requestIdRef.current) return;
       setRecipes(data.meals || []);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error(err);
       setError(`Couldn't load ${category} recipes. Check your connection and try again.`);
       setRetryAction(() => () => handleCategorySelect(category));
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }
 
@@ -219,17 +240,23 @@ const Recipes = () => {
       return;
     }
 
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError("");
+    setRetryAction(null);
     try {
       const data = await filterMealsByArea(cuisine);
+      if (requestId !== requestIdRef.current) return;
       setRecipes(data.meals || []);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error(err);
       setError(`Couldn't load ${cuisine} recipes. Check your connection and try again.`);
       setRetryAction(() => () => handleCuisineSelect(cuisine));
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }
 
@@ -243,17 +270,23 @@ const Recipes = () => {
     setCurrentPage(1);
     setInfiniteLimit(12);
 
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError("");
+    setRetryAction(null);
     try {
       const data = await filterMealsByIngredient(ingredient.toLowerCase());
+      if (requestId !== requestIdRef.current) return;
       setRecipes(data.meals || []);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error(err);
       setError(`Couldn't load recipes with ${ingredient}. Check your connection and try again.`);
       setRetryAction(() => () => handleIngredientSelect(ingredient));
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }
 
