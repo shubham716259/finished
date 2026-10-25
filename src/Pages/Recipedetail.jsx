@@ -165,6 +165,20 @@ const Recipes = () => {
     }
 
     setSearchValidation("");
+    setSelectedCategory(
+      searchMode === "category"
+        ? CATEGORIES.find((category) => category.toLowerCase() === query.toLowerCase()) || "All"
+        : "All"
+    );
+    setSelectedCuisine(
+      searchMode === "cuisine"
+        ? CUISINES.find((cuisine) => cuisine.toLowerCase() === query.toLowerCase()) || "All"
+        : "All"
+    );
+    setSelectedIngredient(searchMode === "ingredient" ? query : "");
+    setCurrentPage(1);
+    setInfiniteLimit(12);
+
     const requestId = ++requestIdRef.current;
     setLoading(true);
     setError("");
@@ -210,6 +224,8 @@ const Recipes = () => {
     setSelectedCuisine("All");
     setSelectedIngredient("");
     setSearchQuery("");
+    setSearchMode("name");
+    setSearchValidation("");
     setCurrentPage(1);
     setInfiniteLimit(12);
 
@@ -245,6 +261,8 @@ const Recipes = () => {
     setSelectedCategory("All");
     setSelectedIngredient("");
     setSearchQuery("");
+    setSearchMode("name");
+    setSearchValidation("");
     setCurrentPage(1);
     setInfiniteLimit(12);
 
@@ -281,6 +299,7 @@ const Recipes = () => {
     setSelectedCuisine("All");
     setSearchQuery(ingredient);
     setSearchMode("ingredient");
+    setSearchValidation("");
     setCurrentPage(1);
     setInfiniteLimit(12);
 
