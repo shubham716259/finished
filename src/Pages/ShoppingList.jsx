@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { usePlanner } from "../context/PlannerContext";
 import { useToast } from "../context/ToastContext";
+import EmptyState from "../components/EmptyState";
 import {
   FaShoppingCart,
   FaCheck,
@@ -474,12 +475,13 @@ const ShoppingList = () => {
           ITEMS LIST / EMPTY
       ========================= */}
       {totalItemsCount === 0 ? (
-        <div className="shopping-empty-box">
-          <div className="shopping-empty-icon">🛒</div>
-          <h2>Your Shopping List is Empty</h2>
-          <p>
-            Add meals to your Weekly Meal Planner or add custom grocery items above to automatically generate your shopping list.
-          </p>
+        <EmptyState
+          className="shopping-empty-box"
+          icon="🛒"
+          iconClassName="shopping-empty-icon"
+          title="Your Shopping List is Empty"
+          description="Add meals to your Weekly Meal Planner or add custom grocery items above to automatically generate your shopping list."
+        >
           <div className="empty-action-links">
             <Link to="/planner" className="btn-go-planner">
               <FaCalendarAlt /> Go to Meal Planner
@@ -488,7 +490,7 @@ const ShoppingList = () => {
               Explore Recipes &rarr;
             </Link>
           </div>
-        </div>
+        </EmptyState>
       ) : (
         <section className="shopping-categories-container">
           {Object.entries(groupedItems).map(([groupTitle, items]) => (
