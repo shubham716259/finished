@@ -10,12 +10,12 @@ import {
 } from "../store/favoritesSlice";
 import { useToast } from "../context/ToastContext";
 import PlannerModal from "../components/PlannerModal";
+import SearchInput from "../components/SearchInput";
 import {
   FaHeart,
   FaTrash,
   FaCalendarPlus,
   FaShoppingCart,
-  FaSearch,
   FaUtensils,
   FaGlobeAmericas,
 } from "react-icons/fa";
@@ -203,24 +203,14 @@ const Favorites = () => {
       {/* FILTER & SEARCH */}
       {detailedFavorites.length > 0 && (
         <div className="favorites-search-bar-row">
-          <div className="fav-search-input">
-            <FaSearch />
-            <input
-              type="text"
-              placeholder="Search in your favorites..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                className="clear-search-btn"
-                onClick={() => setSearchQuery("")}
-              >
-                ×
-              </button>
-            )}
-          </div>
+          <SearchInput
+            wrapperClassName="fav-search-input"
+            ariaLabel="Search favorites"
+            placeholder="Search in your favorites..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onClear={() => setSearchQuery("")}
+          />
 
           <div className="fav-category-filter">
             <label>Filter:</label>
