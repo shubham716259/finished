@@ -10,6 +10,7 @@ import {
 } from "../store/favoritesSlice";
 import { useToast } from "../context/ToastContext";
 import PlannerModal from "../components/PlannerModal";
+import LoadingStatus from "../components/LoadingStatus";
 import SearchInput from "../components/SearchInput";
 import {
   FaHeart,
@@ -161,10 +162,13 @@ const Favorites = () => {
   if (loading && detailedFavorites.length === 0) {
     return (
       <main className="favorites-page">
-        <div className="favorites-status">
-          <div className="loader" />
+        <LoadingStatus
+          className="favorites-status"
+          spinnerClassName="loader"
+          ariaLabel="Loading your favorite collection"
+        >
           <p>Loading your favorite collection...</p>
-        </div>
+        </LoadingStatus>
       </main>
     );
   }

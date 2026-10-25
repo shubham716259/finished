@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import RecipeCard from "../components/Recipecard";
+import LoadingStatus from "../components/LoadingStatus";
 import SearchInput from "../components/SearchInput";
 import { FaSearch, FaFilter, FaGlobeAmericas, FaUtensils, FaPepperHot, FaLayerGroup, FaRedoAlt } from "react-icons/fa";
 import "../styles/recipe.css";
@@ -523,7 +524,10 @@ const Recipes = () => {
           LOADING STATE
       ========================= */}
       {loading && (
-        <div className="recipe-grid skeleton-grid">
+        <LoadingStatus
+          className="recipe-grid skeleton-grid"
+          ariaLabel="Loading recipes"
+        >
           {Array.from({ length: itemsPerPage }).map((_, i) => (
             <div key={i} className="recipe-card-skeleton">
               <div className="skeleton-image" />
@@ -534,7 +538,7 @@ const Recipes = () => {
               </div>
             </div>
           ))}
-        </div>
+        </LoadingStatus>
       )}
 
       {/* =========================

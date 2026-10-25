@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { usePlanner } from "../context/PlannerContext";
 import { useToast } from "../context/ToastContext";
+import LoadingStatus from "../components/LoadingStatus";
 import {
   FaShoppingCart,
   FaCheck,
@@ -348,10 +349,13 @@ const ShoppingList = () => {
   if (loading) {
     return (
       <main className="shopping-page">
-        <div className="shopping-loading">
-          <div className="shopping-loader" />
+        <LoadingStatus
+          className="shopping-loading"
+          spinnerClassName="shopping-loader"
+          ariaLabel="Compiling your weekly grocery list"
+        >
           <p>Compiling your weekly grocery list...</p>
-        </div>
+        </LoadingStatus>
       </main>
     );
   }

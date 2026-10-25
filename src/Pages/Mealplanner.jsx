@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { usePlanner, DAYS_OF_WEEK, MEAL_SLOTS } from "../context/PlannerContext";
 import { useToast } from "../context/ToastContext";
+import LoadingStatus from "../components/LoadingStatus";
 import {
   cacheRecipe,
   selectCachedRecipes,
@@ -349,7 +350,9 @@ const MealPlanner = () => {
             {modalTab === "favorites" && (
               <div className="modal-tab-body">
                 {favLoading ? (
-                  <div className="modal-loader">Loading favorites...</div>
+                  <LoadingStatus className="modal-loader">
+                    Loading favorites...
+                  </LoadingStatus>
                 ) : favoriteMeals.length === 0 ? (
                   <div className="modal-empty-state">
                     <p>You have no saved favorites yet.</p>
@@ -404,7 +407,9 @@ const MealPlanner = () => {
                 </form>
 
                 {searchLoading ? (
-                  <div className="modal-loader">Searching recipes...</div>
+                  <LoadingStatus className="modal-loader">
+                    Searching recipes...
+                  </LoadingStatus>
                 ) : searchResults.length > 0 ? (
                   <div className="modal-recipes-list">
                     {searchResults.map((recipe) => (
