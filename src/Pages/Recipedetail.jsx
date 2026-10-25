@@ -155,7 +155,7 @@ const Recipes = () => {
     const query = searchQuery.trim();
 
     if (!query) {
-      loadInitialRecipes();
+      handleResetFilters();
       return;
     }
 
@@ -313,6 +313,10 @@ const Recipes = () => {
     setSelectedIngredient("");
     setSearchMode("name");
     setSortBy("featured");
+    setItemsPerPage(12);
+    setCurrentPage(1);
+    setInfiniteLimit(12);
+    setViewMode("paged");
     loadInitialRecipes();
   }
 
@@ -420,7 +424,7 @@ const Recipes = () => {
             }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onClear={() => setSearchQuery("")}
+            onClear={handleResetFilters}
           />
           <button type="submit" className="search-submit-btn">
             Search
@@ -478,14 +482,23 @@ const Recipes = () => {
             </div>
           </div>
 
-          {(selectedCategory !== "All" || selectedCuisine !== "All" || selectedIngredient || searchQuery) && (
+          {(selectedCategory !== "All" ||
+            selectedCuisine !== "All" ||
+            selectedIngredient ||
+            searchQuery ||
+            searchMode !== "name" ||
+            sortBy !== "featured" ||
+            itemsPerPage !== 12 ||
+            viewMode !== "paged" ||
+            currentPage !== 1 ||
+            infiniteLimit !== 12) && (
             <button
               type="button"
               className="reset-all-filters-btn"
               onClick={handleResetFilters}
-              title="Reset all filters"
+              aria-label="Reset recipe search, filters, sorting, and pagination"
             >
-              <FaRedoAlt /> Reset Filters
+              <FaRedoAlt aria-hidden="true" /> Reset Search &amp; Filters
             </button>
           )}
         </div>

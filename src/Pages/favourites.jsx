@@ -22,6 +22,7 @@ import {
   FaShoppingCart,
   FaUtensils,
   FaGlobeAmericas,
+  FaRedoAlt,
 } from "react-icons/fa";
 import "../styles/favourite.css";
 
@@ -103,6 +104,11 @@ const Favorites = () => {
   const handleClearFavorites = () => {
     dispatch(clearFavorites());
     addToast("Favorites list cleared", "info");
+  };
+
+  const handleResetSearch = () => {
+    setSearchQuery("");
+    setSelectedCategory("All");
   };
 
   const handleRemoveFavorite = (recipe) => {
@@ -236,7 +242,7 @@ const Favorites = () => {
             placeholder="Search in your favorites..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onClear={() => setSearchQuery("")}
+            onClear={handleResetSearch}
           />
 
           <div className="fav-category-filter">
@@ -252,6 +258,16 @@ const Favorites = () => {
               ))}
             </select>
           </div>
+          {(searchQuery || selectedCategory !== "All") && (
+            <button
+              type="button"
+              className="fav-action-btn reset-search-btn"
+              onClick={handleResetSearch}
+              aria-label="Reset favorites search and category filter"
+            >
+              <FaRedoAlt aria-hidden="true" /> Reset Search &amp; Filter
+            </button>
+          )}
         </div>
       )}
 
