@@ -81,6 +81,12 @@ body {
   background: rgba(239, 68, 68, 0.35);
 }
 
+.search-validation {
+  margin: 0 0 12px;
+  color: #fca5a5;
+  font-size: 14px;
+}
+
 /* ========================================
    GLOBAL FOOTER
 ======================================== */

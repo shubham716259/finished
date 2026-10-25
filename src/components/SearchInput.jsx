@@ -8,6 +8,8 @@ const SearchInput = ({
   wrapperClassName,
   iconClassName,
   ariaLabel,
+  ariaDescribedBy,
+  ariaInvalid,
 }) => (
   <div className={wrapperClassName}>
     <FaSearch className={iconClassName} aria-hidden="true" />
@@ -17,6 +19,8 @@ const SearchInput = ({
       value={value}
       onChange={onChange}
       aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
+      aria-invalid={ariaInvalid}
     />
     {value && (
       <button

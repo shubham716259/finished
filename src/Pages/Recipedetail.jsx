@@ -84,6 +84,7 @@ const Recipes = () => {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchValidation, setSearchValidation] = useState("");
   const [retryAction, setRetryAction] = useState(null);
 
   // Search modes: 'name' | 'ingredient' | 'cuisine' | 'category'
@@ -150,10 +151,15 @@ const Recipes = () => {
     const query = searchQuery.trim();
 
     if (!query) {
-      loadInitialRecipes();
+      requestIdRef.current += 1;
+      setLoading(false);
+      setError("");
+      setRetryAction(null);
+      setSearchValidation("Enter a search term, or choose a category or ingredient filter.");
       return;
     }
 
+    setSearchValidation("");
     const requestId = ++requestIdRef.current;
     setLoading(true);
     setError("");
@@ -394,6 +400,10 @@ const Recipes = () => {
             wrapperClassName="search-input-group"
             iconClassName="search-input-icon"
             ariaLabel="Search recipes"
+            ariaDescribedBy={
+              searchValidation ? "recipe-search-validation" : undefined
+            }
+            ariaInvalid={searchValidation ? true : undefined}
             placeholder={
               searchMode === "name"
                 ? "Search by recipe name (e.g. Pasta, Curry, Pie, Burger)..."
@@ -404,13 +414,24 @@ const Recipes = () => {
                 : "Search by category (e.g. Seafood, Dessert, Vegetarian)..."
             }
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onClear={() => setSearchQuery("")}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setSearchValidation("");
+            }}
+            onClear={() => {
+              setSearchQuery("");
+              setSearchValidation("");
+            }}
           />
           <button type="submit" className="search-submit-btn">
             Search
           </button>
         </form>
+        {searchValidation && (
+          <p id="recipe-search-validation" role="status" className="search-validation">
+            {searchValidation}
+          </p>
+        )}
 
         {/* Secondary dropdowns */}
         <div className="filter-dropdowns-row">

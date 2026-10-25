@@ -57,6 +57,7 @@ const MealPlanner = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [searchValidation, setSearchValidation] = useState("");
 
   // Loaded full favorite recipes
   const [favoriteRecipes, setFavoriteRecipes] = useState([]);
@@ -117,8 +118,13 @@ const MealPlanner = () => {
   async function handleModalSearch(e) {
     if (e) e.preventDefault();
     const query = searchQuery.trim();
-    if (!query) return;
+    if (!query) {
+      setSearchError("");
+      setSearchValidation("Enter a recipe or ingredient to search.");
+      return;
+    }
 
+    setSearchValidation("");
     setSearchLoading(true);
     setSearchError("");
     setSearchResults([]);
@@ -451,13 +457,30 @@ const MealPlanner = () => {
                 <form onSubmit={handleModalSearch} className="modal-search-form">
                   <input
                     type="text"
+                    aria-label="Search recipes to add to planner"
+                    aria-describedby={
+                      searchValidation ? "planner-search-validation" : undefined
+                    }
+                    aria-invalid={searchValidation ? true : undefined}
                     placeholder="Search e.g. Salmon, Curry, Pasta, Tacos..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setSearchValidation("");
+                    }}
                     autoFocus
                   />
                   <button type="submit">Search</button>
                 </form>
+                {searchValidation && (
+                  <p
+                    id="planner-search-validation"
+                    role="status"
+                    className="search-validation"
+                  >
+                    {searchValidation}
+                  </p>
+                )}
 
                 {searchLoading ? (
                   <LoadingStatus className="modal-loader">
