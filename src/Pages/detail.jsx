@@ -8,7 +8,12 @@ import {
 } from "../store/favoritesSlice";
 import { usePlanner } from "../context/PlannerContext";
 import { useToast } from "../context/ToastContext";
-import { filterMealsByCategory, getIngredientImageUrl, lookupMeal } from "../api/mealDb";
+import {
+  filterMealsByCategory,
+  getIngredientImageUrl,
+  isCompleteMealDetail,
+  lookupMeal,
+} from "../api/mealDb";
 import PlannerModal from "../components/PlannerModal";
 import RecipeCard from "../components/Recipecard";
 import LoadingStatus from "../components/LoadingStatus";
@@ -91,6 +96,7 @@ const RecipeDetails = () => {
     const requestToken = ++requestTokenRef.current;
     setLoading(true);
     setError("");
+    setRecipe(null);
     setCheckedIngredients({});
     setActiveStep(null);
     setTimerSeconds(0);
@@ -106,12 +112,17 @@ const RecipeDetails = () => {
       });
 
       if (requestTokenRef.current !== requestToken) return;
-      if (!data.meals || data.meals.length === 0) {
+      if (!data?.meals || data.meals.length === 0) {
         setError("Recipe not found.");
         return;
       }
 
       const meal = data.meals[0];
+      if (!isCompleteMealDetail(meal, id)) {
+        setError("Recipe details are incomplete. Please try again later.");
+        return;
+      }
+
       setRecipe(meal);
       dispatch(cacheRecipe(meal));
 
@@ -304,11 +315,7 @@ const RecipeDetails = () => {
       <main className="recipe-details-page">
         <div className="recipe-details-status">
           <RequestError
-            message={
-              error === "Recipe not found."
-                ? error
-                : "Couldn't load recipe details. Check your connection and try again."
-            }
+            message={error || "Couldn't load recipe details. Check your connection and try again."}
             onRetry={fetchRecipe}
           />
           <Link to="/recipes" className="back-recipes-btn">
@@ -629,7 +636,13 @@ const RecipeDetails = () => {
           ) : relatedError ? (
             <RequestError
               message={relatedError}
-              onRetry={() => fetchRelated(recipe.strCategory, recipe.idMeal)}
+              onRetry={() =>
+                fetchRelated(
+                  recipe.strCategory,
+                  recipe.idMeal,
+                  requestTokenRef.current
+                )
+              }
             />
           ) : (
             <div className="related-grid">

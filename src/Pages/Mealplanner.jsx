@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { usePlanner, DAYS_OF_WEEK, MEAL_SLOTS } from "../context/PlannerContext";
 import { useToast } from "../context/ToastContext";
 import {
+  isCompleteMealDetail,
   lookupMeal,
   searchMealsByName,
 } from "../api/mealDb";
@@ -79,14 +80,24 @@ const MealPlanner = () => {
         let requestFailed = false;
         const list = await Promise.all(
           favorites.map(async (favItem) => {
-            const id = typeof favItem === "object" ? favItem.idMeal : String(favItem);
-            if (cachedRecipes[id]) return cachedRecipes[id];
-            if (typeof favItem === "object" && favItem.strMeal) return favItem;
+            const id =
+              favItem && typeof favItem === "object"
+                ? favItem.idMeal
+                : favItem;
+            if (id === undefined || id === null || id === "") {
+              requestFailed = true;
+              return null;
+            }
+            const idString = String(id);
+            const cachedRecipe = cachedRecipes[idString];
+            if (isCompleteMealDetail(cachedRecipe, idString)) return cachedRecipe;
+            if (isCompleteMealDetail(favItem, idString)) return favItem;
             try {
-              const data = await lookupMeal(id);
-              if (data.meals && data.meals[0]) {
-                dispatch(cacheRecipe(data.meals[0]));
-                return data.meals[0];
+              const data = await lookupMeal(idString);
+              const meal = data?.meals?.[0];
+              if (isCompleteMealDetail(meal, idString)) {
+                dispatch(cacheRecipe(meal));
+                return meal;
               }
               requestFailed = true;
             } catch (e) {

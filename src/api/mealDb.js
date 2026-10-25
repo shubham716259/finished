@@ -17,6 +17,29 @@ async function request(endpoint, { errorMessage } = {}) {
 export const lookupMeal = (id, options) =>
   request(`lookup.php?i=${id}`, options);
 
+export const isCompleteMealDetail = (meal, expectedId) => {
+  if (
+    !meal ||
+    typeof meal !== "object" ||
+    String(meal.idMeal) !== String(expectedId) ||
+    typeof meal.strMeal !== "string" ||
+    !meal.strMeal.trim() ||
+    typeof meal.strMealThumb !== "string" ||
+    !meal.strMealThumb.trim() ||
+    typeof meal.strInstructions !== "string" ||
+    !meal.strInstructions.trim()
+  ) {
+    return false;
+  }
+
+  return Array.from(
+    { length: 20 },
+    (_, index) => meal[`strIngredient${index + 1}`]
+  ).some(
+    (ingredient) => typeof ingredient === "string" && ingredient.trim()
+  );
+};
+
 export const searchMealsByName = (name, options) =>
   request(`search.php?s=${encode(name)}`, options);
 

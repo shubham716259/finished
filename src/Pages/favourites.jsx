@@ -9,7 +9,7 @@ import {
   selectFavorites,
 } from "../store/favoritesSlice";
 import { useToast } from "../context/ToastContext";
-import { lookupMeal } from "../api/mealDb";
+import { isCompleteMealDetail, lookupMeal } from "../api/mealDb";
 import PlannerModal from "../components/PlannerModal";
 import LoadingStatus from "../components/LoadingStatus";
 import RequestError from "../components/RequestError";
@@ -56,22 +56,32 @@ const Favorites = () => {
         let requestFailed = false;
         const results = await Promise.all(
           favorites.map(async (favItem) => {
-            const id = typeof favItem === "object" ? favItem.idMeal : String(favItem);
+            const id =
+              favItem && typeof favItem === "object"
+                ? favItem.idMeal
+                : favItem;
+            if (id === undefined || id === null || id === "") {
+              requestFailed = true;
+              return null;
+            }
+            const idString = String(id);
 
             // Check cache first for instant load
-            if (cachedRecipes[id]) {
-              return cachedRecipes[id];
+            const cachedRecipe = cachedRecipes[idString];
+            if (isCompleteMealDetail(cachedRecipe, idString)) {
+              return cachedRecipe;
             }
-            if (typeof favItem === "object" && favItem.strMeal) {
+            if (isCompleteMealDetail(favItem, idString)) {
               return favItem;
             }
 
             // Fetch missing from API
             try {
-              const data = await lookupMeal(id);
-              if (data.meals && data.meals[0]) {
-                dispatch(cacheRecipe(data.meals[0]));
-                return data.meals[0];
+              const data = await lookupMeal(idString);
+              const meal = data?.meals?.[0];
+              if (isCompleteMealDetail(meal, idString)) {
+                dispatch(cacheRecipe(meal));
+                return meal;
               }
               requestFailed = true;
             } catch (err) {
@@ -130,7 +140,7 @@ const Favorites = () => {
     return detailedFavorites.filter((recipe) => {
       const matchesSearch =
         !searchQuery ||
-        recipe.strMeal.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        recipe.strMeal?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         recipe.strArea?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         recipe.strCategory?.toLowerCase().includes(searchQuery.toLowerCase());
 
