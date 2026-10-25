@@ -12,6 +12,7 @@ import { filterMealsByCategory, getIngredientImageUrl, lookupMeal } from "../api
 import PlannerModal from "../components/PlannerModal";
 import RecipeCard from "../components/Recipecard";
 import LoadingStatus from "../components/LoadingStatus";
+import RequestError from "../components/RequestError";
 import {
   FaHeart,
   FaRegHeart,
@@ -42,6 +43,8 @@ const RecipeDetails = () => {
   const [error, setError] = useState("");
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [relatedRecipes, setRelatedRecipes] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
+  const [relatedError, setRelatedError] = useState("");
   const inFlightRecipeIdsRef = useRef(new Set());
   const requestTokenRef = useRef(0);
 
@@ -56,9 +59,12 @@ const RecipeDetails = () => {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timerInputMinutes, setTimerInputMinutes] = useState(15);
 
-  const fetchRelated = useCallback(async (category, currentId) => {
+  const fetchRelated = useCallback(async (category, currentId, requestToken) => {
+    setRelatedLoading(true);
+    setRelatedError("");
     try {
       const data = await filterMealsByCategory(category);
+      if (requestTokenRef.current !== requestToken) return;
       if (data.meals) {
         const filtered = data.meals
           .filter((m) => m.idMeal !== currentId)
@@ -66,7 +72,15 @@ const RecipeDetails = () => {
         setRelatedRecipes(filtered);
       }
     } catch (e) {
+      if (requestTokenRef.current !== requestToken) return;
       console.error("Failed to load related recipes", e);
+      setRelatedError(
+        "Couldn't load related recipes. Check your connection and try again."
+      );
+    } finally {
+      if (requestTokenRef.current === requestToken) {
+        setRelatedLoading(false);
+      }
     }
   }, []);
 
@@ -81,6 +95,9 @@ const RecipeDetails = () => {
     setActiveStep(null);
     setTimerSeconds(0);
     setIsTimerRunning(false);
+    setRelatedRecipes([]);
+    setRelatedError("");
+    setRelatedLoading(false);
 
     try {
       const data = await lookupMeal(id, {
@@ -99,7 +116,7 @@ const RecipeDetails = () => {
       dispatch(cacheRecipe(meal));
 
       if (meal.strCategory) {
-        fetchRelated(meal.strCategory, meal.idMeal);
+        fetchRelated(meal.strCategory, meal.idMeal, requestToken);
       }
     } catch (err) {
       console.error(err);
@@ -121,6 +138,7 @@ const RecipeDetails = () => {
     });
     return () => {
       active = false;
+      requestTokenRef.current += 1;
     };
   }, [fetchRecipe]);
 
@@ -285,15 +303,14 @@ const RecipeDetails = () => {
     return (
       <main className="recipe-details-page">
         <div className="recipe-details-status">
-          <h2>{error || "Recipe not found"}</h2>
-          <button
-            type="button"
-            className="back-recipes-btn"
-            onClick={fetchRecipe}
-            disabled={loading}
-          >
-            Try Again
-          </button>
+          <RequestError
+            message={
+              error === "Recipe not found."
+                ? error
+                : "Couldn't load recipe details. Check your connection and try again."
+            }
+            onRetry={fetchRecipe}
+          />
           <Link to="/recipes" className="back-recipes-btn">
             &larr; Back to Recipes
           </Link>
@@ -602,14 +619,25 @@ const RecipeDetails = () => {
       {/* =========================
           RELATED RECIPES CAROUSEL
       ========================= */}
-      {relatedRecipes.length > 0 && (
+      {(relatedLoading || relatedError || relatedRecipes.length > 0) && (
         <section className="related-recipes-section">
           <h2>More {recipe.strCategory} Recipes You Might Love</h2>
-          <div className="related-grid">
-            {relatedRecipes.map((rel) => (
-              <RecipeCard key={rel.idMeal} recipe={rel} />
-            ))}
-          </div>
+          {relatedLoading ? (
+            <LoadingStatus ariaLabel="Loading related recipes">
+              Loading related recipes...
+            </LoadingStatus>
+          ) : relatedError ? (
+            <RequestError
+              message={relatedError}
+              onRetry={() => fetchRelated(recipe.strCategory, recipe.idMeal)}
+            />
+          ) : (
+            <div className="related-grid">
+              {relatedRecipes.map((rel) => (
+                <RecipeCard key={rel.idMeal} recipe={rel} />
+              ))}
+            </div>
+          )}
         </section>
       )}
 

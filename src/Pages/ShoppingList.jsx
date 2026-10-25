@@ -2,12 +2,10 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { usePlanner } from "../context/PlannerContext";
 import { useToast } from "../context/ToastContext";
-<<<<<<< HEAD
 import EmptyState from "../components/EmptyState";
-=======
 import LoadingStatus from "../components/LoadingStatus";
+import RequestError from "../components/RequestError";
 import { lookupMeal } from "../api/mealDb";
->>>>>>> de3ad05a8106e511bcb4398515c7600188da72b4
 import {
   FaShoppingCart,
   FaCheck,
@@ -129,6 +127,8 @@ const ShoppingList = () => {
   const { addToast } = useToast();
 
   const [loading, setLoading] = useState(true);
+  const [loadingError, setLoadingError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   const [plannerIngredients, setPlannerIngredients] = useState([]);
   const [customItems, setCustomItems] = useState(() => {
     try {
@@ -174,16 +174,19 @@ const ShoppingList = () => {
   useEffect(() => {
     async function extractPlannerIngredients() {
       setLoading(true);
+      setLoadingError("");
       try {
         const plannedRecipes = getPlannedRecipes();
 
         if (plannedRecipes.length === 0) {
           setPlannerIngredients([]);
+          setLoadingError("");
           setLoading(false);
           return;
         }
 
         // Fetch full details if recipes in planner only have id/name/thumb
+        let requestFailed = false;
         const detailedMeals = await Promise.all(
           plannedRecipes.map(async (recipe) => {
             if (recipe.strIngredient1) {
@@ -191,9 +194,13 @@ const ShoppingList = () => {
             }
             try {
               const data = await lookupMeal(recipe.idMeal);
-              return data.meals?.[0] || recipe;
-            } catch {
-              return recipe;
+              if (data.meals?.[0]) return data.meals[0];
+              requestFailed = true;
+              return null;
+            } catch (err) {
+              console.error(`Failed to load ingredients for ${recipe.strMeal}:`, err);
+              requestFailed = true;
+              return null;
             }
           })
         );
@@ -218,15 +225,23 @@ const ShoppingList = () => {
         });
 
         setPlannerIngredients(extracted);
+        if (requestFailed) {
+          setLoadingError(
+            "Some planned recipes couldn't be loaded. Check your connection and try again."
+          );
+        }
       } catch (err) {
         console.error("Failed to extract shopping list:", err);
+        setLoadingError(
+          "Couldn't compile ingredients from your planner. Check your connection and try again."
+        );
       } finally {
         setLoading(false);
       }
     }
 
     extractPlannerIngredients();
-  }, [planner, getPlannedRecipes]);
+  }, [planner, getPlannedRecipes, retryCount]);
 
   // Combine planner and custom items
   const allItems = useMemo(() => {
@@ -451,6 +466,14 @@ const ShoppingList = () => {
         )}
       </section>
 
+      {loadingError && (
+        <RequestError
+          message={loadingError}
+          onRetry={() => setRetryCount((count) => count + 1)}
+          className="shopping-load-error"
+        />
+      )}
+
       {/* =========================
           CUSTOM ITEM INPUT FORM
       ========================= */}
@@ -479,7 +502,7 @@ const ShoppingList = () => {
       {/* =========================
           ITEMS LIST / EMPTY
       ========================= */}
-      {totalItemsCount === 0 ? (
+      {totalItemsCount === 0 && !loadingError ? (
         <EmptyState
           className="shopping-empty-box"
           icon="🛒"

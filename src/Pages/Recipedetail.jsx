@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import RecipeCard from "../components/Recipecard";
 import LoadingStatus from "../components/LoadingStatus";
+import RequestError from "../components/RequestError";
 import SearchInput from "../components/SearchInput";
+import EmptyState from "../components/EmptyState";
 import {
   filterMealsByArea,
   filterMealsByCategory,
@@ -82,6 +84,7 @@ const Recipes = () => {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [retryAction, setRetryAction] = useState(null);
 
   // Search modes: 'name' | 'ingredient' | 'cuisine' | 'category'
   const [searchMode, setSearchMode] = useState("name");
@@ -98,20 +101,24 @@ const Recipes = () => {
   const [infiniteLimit, setInfiniteLimit] = useState(12);
 
   const gridRef = useRef(null);
-  const retryRequestRef = useRef(null);
+  const requestIdRef = useRef(0);
   const retryInProgressRef = useRef(false);
 
   const loadInitialRecipes = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError("");
+    setRetryAction(null);
     try {
       // Fetch diverse categories to build an impressive initial pool
       const initialCategories = ["Chicken", "Beef", "Pasta", "Vegetarian", "Seafood", "Dessert"];
       const responses = await Promise.all(
         initialCategories.map((cat) =>
-          filterMealsByCategory(cat, { checkStatus: true })
+          filterMealsByCategory(cat)
         )
       );
+
+      if (requestId !== requestIdRef.current) return;
 
       const allMeals = responses.flatMap((data) => data.meals || []);
       const uniqueMeals = Array.from(
@@ -122,19 +129,24 @@ const Recipes = () => {
       setCurrentPage(1);
       setInfiniteLimit(12);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error(err);
-      setError("Unable to load recipes. Please check your internet connection.");
+      setError("Couldn't load recipes. Check your connection and try again.");
+      setRetryAction(() => loadInitialRecipes);
     } finally {
-      setLoading(false);
-      retryInProgressRef.current = false;
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+        retryInProgressRef.current = false;
+      }
     }
   }, []);
 
-  // Defer initial loading until after the initial render.
   useEffect(() => {
-    retryRequestRef.current = loadInitialRecipes;
     const timeoutId = setTimeout(loadInitialRecipes, 0);
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+      requestIdRef.current += 1;
+    };
   }, [loadInitialRecipes]);
 
   // Handle Search submit
@@ -143,29 +155,28 @@ const Recipes = () => {
     const query = searchQuery.trim();
 
     if (!query) {
-      retryRequestRef.current = loadInitialRecipes;
       loadInitialRecipes();
       return;
     }
 
-    retryRequestRef.current = () => handleSearch();
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError("");
+    setRetryAction(null);
 
     try {
-      const requestOptions = {
-        checkStatus: true,
-      };
       let data;
       if (searchMode === "name") {
-        data = await searchMealsByName(query, requestOptions);
+        data = await searchMealsByName(query);
       } else if (searchMode === "ingredient") {
-        data = await filterMealsByIngredient(query.toLowerCase(), requestOptions);
+        data = await filterMealsByIngredient(query.toLowerCase());
       } else if (searchMode === "cuisine") {
-        data = await filterMealsByArea(query, requestOptions);
+        data = await filterMealsByArea(query);
       } else if (searchMode === "category") {
-        data = await filterMealsByCategory(query, requestOptions);
+        data = await filterMealsByCategory(query);
       }
+
+      if (requestId !== requestIdRef.current) return;
 
       if (!data.meals || data.meals.length === 0) {
         setRecipes([]);
@@ -175,11 +186,15 @@ const Recipes = () => {
       setCurrentPage(1);
       setInfiniteLimit(12);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error(err);
-      setError("Failed to fetch recipes matching your search.");
+      setError("Couldn't load search results. Check your connection and try again.");
+      setRetryAction(() => () => handleSearch());
     } finally {
-      setLoading(false);
-      retryInProgressRef.current = false;
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+        retryInProgressRef.current = false;
+      }
     }
   }
 
@@ -193,23 +208,28 @@ const Recipes = () => {
     setInfiniteLimit(12);
 
     if (category === "All") {
-      retryRequestRef.current = loadInitialRecipes;
       loadInitialRecipes();
       return;
     }
 
-    retryRequestRef.current = () => handleCategorySelect(category);
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError("");
+    setRetryAction(null);
     try {
-      const data = await filterMealsByCategory(category, { checkStatus: true });
+      const data = await filterMealsByCategory(category);
+      if (requestId !== requestIdRef.current) return;
       setRecipes(data.meals || []);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error(err);
-      setError(`Unable to load ${category} recipes.`);
+      setError(`Couldn't load ${category} recipes. Check your connection and try again.`);
+      setRetryAction(() => () => handleCategorySelect(category));
     } finally {
-      setLoading(false);
-      retryInProgressRef.current = false;
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+        retryInProgressRef.current = false;
+      }
     }
   }
 
@@ -223,23 +243,28 @@ const Recipes = () => {
     setInfiniteLimit(12);
 
     if (cuisine === "All") {
-      retryRequestRef.current = loadInitialRecipes;
       loadInitialRecipes();
       return;
     }
 
-    retryRequestRef.current = () => handleCuisineSelect(cuisine);
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError("");
+    setRetryAction(null);
     try {
-      const data = await filterMealsByArea(cuisine, { checkStatus: true });
+      const data = await filterMealsByArea(cuisine);
+      if (requestId !== requestIdRef.current) return;
       setRecipes(data.meals || []);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error(err);
-      setError(`Unable to load ${cuisine} recipes.`);
+      setError(`Couldn't load ${cuisine} recipes. Check your connection and try again.`);
+      setRetryAction(() => () => handleCuisineSelect(cuisine));
     } finally {
-      setLoading(false);
-      retryInProgressRef.current = false;
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+        retryInProgressRef.current = false;
+      }
     }
   }
 
@@ -253,27 +278,31 @@ const Recipes = () => {
     setCurrentPage(1);
     setInfiniteLimit(12);
 
-    retryRequestRef.current = () => handleIngredientSelect(ingredient);
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError("");
+    setRetryAction(null);
     try {
-      const data = await filterMealsByIngredient(ingredient.toLowerCase(), {
-        checkStatus: true,
-      });
+      const data = await filterMealsByIngredient(ingredient.toLowerCase());
+      if (requestId !== requestIdRef.current) return;
       setRecipes(data.meals || []);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error(err);
-      setError(`Unable to load recipes with ${ingredient}.`);
+      setError(`Couldn't load recipes with ${ingredient}. Check your connection and try again.`);
+      setRetryAction(() => () => handleIngredientSelect(ingredient));
     } finally {
-      setLoading(false);
-      retryInProgressRef.current = false;
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+        retryInProgressRef.current = false;
+      }
     }
   }
 
   function handleRetry() {
-    if (loading || retryInProgressRef.current || !retryRequestRef.current) return;
+    if (loading || retryInProgressRef.current || !retryAction) return;
     retryInProgressRef.current = true;
-    retryRequestRef.current();
+    retryAction();
   }
 
   // Reset all filters
@@ -284,7 +313,6 @@ const Recipes = () => {
     setSelectedIngredient("");
     setSearchMode("name");
     setSortBy("featured");
-    retryRequestRef.current = loadInitialRecipes;
     loadInitialRecipes();
   }
 
@@ -563,17 +591,11 @@ const Recipes = () => {
           ERROR STATE
       ========================= */}
       {!loading && error && (
-        <div className="recipe-status error">
-          <p>{error}</p>
-          <button
-            type="button"
-            onClick={handleRetry}
-            className="retry-btn"
-            disabled={loading}
-          >
-            Try Again
-          </button>
-        </div>
+        <RequestError
+          message={error}
+          onRetry={handleRetry}
+          className="recipe-status error"
+        />
       )}
 
       {/* =========================

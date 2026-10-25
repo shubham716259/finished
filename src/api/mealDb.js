@@ -4,10 +4,10 @@ const MEALDB_INGREDIENT_IMAGE_BASE_URL =
 
 const encode = encodeURIComponent;
 
-async function request(endpoint, { checkStatus = false, errorMessage } = {}) {
+async function request(endpoint, { errorMessage } = {}) {
   const response = await fetch(`${MEALDB_API_BASE_URL}/${endpoint}`);
 
-  if (checkStatus && !response.ok) {
+  if (!response.ok) {
     throw new Error(errorMessage || `Recipe request failed with status ${response.status}`);
   }
 
