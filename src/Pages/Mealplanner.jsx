@@ -27,6 +27,12 @@ import {
 import EmptyState from "../components/EmptyState";
 import "../styles/planner.css";
 
+const EMPTY_DAY_MEALS = {
+  Breakfast: null,
+  Lunch: null,
+  Dinner: null,
+};
+
 const MealPlanner = () => {
   const {
     planner,
@@ -51,17 +57,17 @@ const MealPlanner = () => {
   const [searchLoading, setSearchLoading] = useState(false);
 
   // Loaded full favorite recipes
-  const [favoriteMeals, setFavoriteMeals] = useState([]);
-  const [favLoading, setFavLoading] = useState(false);
+  const [favoriteRecipes, setFavoriteRecipes] = useState([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
 
   // Load detailed objects for favorites modal
   useEffect(() => {
     async function loadFavs() {
       if (favorites.length === 0) {
-        setFavoriteMeals([]);
+        setFavoriteRecipes([]);
         return;
       }
-      setFavLoading(true);
+      setFavoritesLoading(true);
       try {
         const list = await Promise.all(
           favorites.map(async (favItem) => {
@@ -80,9 +86,9 @@ const MealPlanner = () => {
             return null;
           })
         );
-        setFavoriteMeals(list.filter(Boolean));
+        setFavoriteRecipes(list.filter(Boolean));
       } finally {
-        setFavLoading(false);
+        setFavoritesLoading(false);
       }
     }
     loadFavs();
@@ -91,11 +97,12 @@ const MealPlanner = () => {
   // Search recipes for planner modal
   async function handleModalSearch(e) {
     if (e) e.preventDefault();
-    if (!searchQuery.trim()) return;
+    const query = searchQuery.trim();
+    if (!query) return;
 
     setSearchLoading(true);
     try {
-      const data = await searchMealsByName(searchQuery.trim());
+      const data = await searchMealsByName(query);
       setSearchResults(data.meals || []);
     } catch (e) {
       console.error(e);
@@ -115,7 +122,7 @@ const MealPlanner = () => {
 
   // Quick Auto-Plan Week
   const handleAutoPlan = async () => {
-    let pool = [...favoriteMeals];
+    let pool = [...favoriteRecipes];
     if (pool.length < 5) {
       try {
         const data = await searchMealsByName("chicken");
@@ -207,11 +214,7 @@ const MealPlanner = () => {
       ========================= */}
       <section className="weekly-planner-grid">
         {DAYS_OF_WEEK.map((day) => {
-          const dayMeals = planner[day] || {
-            Breakfast: null,
-            Lunch: null,
-            Dinner: null,
-          };
+          const dayMeals = planner[day] || EMPTY_DAY_MEALS;
           const hasAnyMeal = MEAL_SLOTS.some((slot) => !!dayMeals[slot]);
 
           return (
@@ -338,7 +341,7 @@ const MealPlanner = () => {
                 className={`modal-tab ${modalTab === "favorites" ? "active" : ""}`}
                 onClick={() => setModalTab("favorites")}
               >
-                <FaHeart /> My Favorites ({favoriteMeals.length})
+                <FaHeart /> My Favorites ({favoriteRecipes.length})
               </button>
               <button
                 type="button"
@@ -352,11 +355,11 @@ const MealPlanner = () => {
             {/* TAB CONTENT: FAVORITES */}
             {modalTab === "favorites" && (
               <div className="modal-tab-body">
-                {favLoading ? (
+                {favoritesLoading ? (
                   <LoadingStatus className="modal-loader">
                     Loading favorites...
                   </LoadingStatus>
-                ) : favoriteMeals.length === 0 ? (
+                ) : favoriteRecipes.length === 0 ? (
                   <EmptyState
                     className="modal-empty-state"
                     title="No saved favorites yet"
@@ -372,7 +375,7 @@ const MealPlanner = () => {
                   </EmptyState>
                 ) : (
                   <div className="modal-recipes-list">
-                    {favoriteMeals.map((recipe) => (
+                    {favoriteRecipes.map((recipe) => (
                       <button
                         key={recipe.idMeal}
                         type="button"

@@ -2,12 +2,9 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { usePlanner } from "../context/PlannerContext";
 import { useToast } from "../context/ToastContext";
-<<<<<<< HEAD
 import EmptyState from "../components/EmptyState";
-=======
 import LoadingStatus from "../components/LoadingStatus";
 import { lookupMeal } from "../api/mealDb";
->>>>>>> de3ad05a8106e511bcb4398515c7600188da72b4
 import {
   FaShoppingCart,
   FaCheck,
