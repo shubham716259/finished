@@ -9,6 +9,7 @@ import {
   selectFavorites,
 } from "../store/favoritesSlice";
 import { useToast } from "../context/ToastContext";
+import { lookupMeal } from "../api/mealDb";
 import PlannerModal from "../components/PlannerModal";
 import LoadingStatus from "../components/LoadingStatus";
 import SearchInput from "../components/SearchInput";
@@ -59,10 +60,7 @@ const Favorites = () => {
 
             // Fetch missing from API
             try {
-              const res = await fetch(
-                `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`
-              );
-              const data = await res.json();
+              const data = await lookupMeal(id);
               if (data.meals && data.meals[0]) {
                 dispatch(cacheRecipe(data.meals[0]));
                 return data.meals[0];

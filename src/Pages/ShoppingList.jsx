@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { usePlanner } from "../context/PlannerContext";
 import { useToast } from "../context/ToastContext";
 import LoadingStatus from "../components/LoadingStatus";
+import { lookupMeal } from "../api/mealDb";
 import {
   FaShoppingCart,
   FaCheck,
@@ -185,10 +186,7 @@ const ShoppingList = () => {
               return recipe;
             }
             try {
-              const res = await fetch(
-                `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${recipe.idMeal}`
-              );
-              const data = await res.json();
+              const data = await lookupMeal(recipe.idMeal);
               return data.meals?.[0] || recipe;
             } catch {
               return recipe;
