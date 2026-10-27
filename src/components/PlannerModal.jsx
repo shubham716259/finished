@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import { usePlanner, DAYS_OF_WEEK, MEAL_SLOTS } from "../context/PlannerContext";
 import "../styles/planner.css";
 

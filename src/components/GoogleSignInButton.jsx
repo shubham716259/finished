@@ -1,11 +1,16 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { FaUserPlus, FaChevronRight } from "react-icons/fa";
 
-const GoogleSignInButton = ({ text = "Continue with Google", onStart, onSuccess, onError }) => {
+const GoogleSignInButton = ({
+  text = "Continue with Google",
+  onStart,
+  onSuccess,
+  onError,
+}) => {
   const { loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -18,58 +23,58 @@ const GoogleSignInButton = ({ text = "Continue with Google", onStart, onSuccess,
 
   const hasConfiguredClientId =
     import.meta.env.VITE_GOOGLE_CLIENT_ID &&
-    !import.meta.env.VITE_GOOGLE_CLIENT_ID.includes("apps.googleusercontent.com");
+    !import.meta.env.VITE_GOOGLE_CLIENT_ID.includes(
+      "apps.googleusercontent.com",
+    );
 
-  let googleOAuthHandler;
+  const googleOAuthHandler = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+      if (onStart) onStart();
 
-  try {
-    if (hasConfiguredClientId) {
-      googleOAuthHandler = useGoogleLogin({
-        onSuccess: async (tokenResponse) => {
-          setLoading(true);
-          if (onStart) onStart();
+      try {
+        const response = await fetch(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          {
+            headers: {
+              Authorization: `Bearer ${tokenResponse.access_token}`,
+            },
+          },
+        );
 
-          try {
-            const response = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-              headers: {
-                Authorization: `Bearer ${tokenResponse.access_token}`,
-              },
-            });
+        if (!response.ok) {
+          throw new Error("Failed to fetch Google profile");
+        }
 
-            if (!response.ok) {
-              throw new Error("Failed to fetch Google profile");
-            }
+        const googleProfile = await response.json();
 
-            const googleProfile = await response.json();
+        const userProfile = {
+          name:
+            googleProfile.name ||
+            `${googleProfile.given_name || ""} ${googleProfile.family_name || ""}`.trim() ||
+            "Google User",
+          email: (googleProfile.email || "user@gmail.com").toLowerCase(),
+          avatar: googleProfile.picture || null,
+        };
 
-            const userProfile = {
-              name: googleProfile.name || `${googleProfile.given_name || ""} ${googleProfile.family_name || ""}`.trim() || "Google User",
-              email: (googleProfile.email || "user@gmail.com").toLowerCase(),
-              avatar: googleProfile.picture || null,
-            };
+        const loggedIn = loginWithGoogle(userProfile);
 
-            const loggedIn = loginWithGoogle(userProfile);
-
-            if (onSuccess) {
-              onSuccess(loggedIn);
-            } else {
-              setTimeout(() => navigate("/"), 800);
-            }
-          } catch (err) {
-            console.error("Google user profile fetch error:", err);
-            if (onError) onError("Failed to load Google account information.");
-          } finally {
-            setLoading(false);
-          }
-        },
-        onError: () => {
-          setShowChooserModal(true);
-        },
-      });
-    }
-  } catch (err) {
-    console.warn("useGoogleLogin init:", err);
-  }
+        if (onSuccess) {
+          onSuccess(loggedIn);
+        } else {
+          setTimeout(() => navigate("/"), 800);
+        }
+      } catch (err) {
+        console.error("Google user profile fetch error:", err);
+        if (onError) onError("Failed to load Google account information.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => {
+      setShowChooserModal(true);
+    },
+  });
 
   const handleClick = () => {
     if (hasConfiguredClientId && googleOAuthHandler) {
@@ -139,7 +144,9 @@ const GoogleSignInButton = ({ text = "Continue with Google", onStart, onSuccess,
             <div className="google-modal-header">
               <FcGoogle className="google-logo-large" />
               <h3>Sign in with Google</h3>
-              <p className="google-subtitle">Choose an account to continue to <strong>CookFusion</strong></p>
+              <p className="google-subtitle">
+                Choose an account to continue to <strong>CookFusion</strong>
+              </p>
             </div>
 
             {!useCustomAccount ? (
@@ -160,7 +167,9 @@ const GoogleSignInButton = ({ text = "Continue with Google", onStart, onSuccess,
                   <div className="google-avatar-badge default-avatar">S</div>
                   <div className="google-account-details">
                     <span className="account-name">Shubham</span>
-                    <span className="account-email">shubham716259@gmail.com</span>
+                    <span className="account-email">
+                      shubham716259@gmail.com
+                    </span>
                   </div>
                   <FaChevronRight className="account-arrow" />
                 </div>
@@ -197,8 +206,12 @@ const GoogleSignInButton = ({ text = "Continue with Google", onStart, onSuccess,
                     <FaUserPlus />
                   </div>
                   <div className="google-account-details">
-                    <span className="account-name">Use another Google account</span>
-                    <span className="account-email">Sign in with a different email</span>
+                    <span className="account-name">
+                      Use another Google account
+                    </span>
+                    <span className="account-email">
+                      Sign in with a different email
+                    </span>
                   </div>
                   <FaChevronRight className="account-arrow" />
                 </div>
@@ -217,7 +230,9 @@ const GoogleSignInButton = ({ text = "Continue with Google", onStart, onSuccess,
                   autoFocus
                 />
 
-                <label htmlFor="custom-google-email">Google Email Address</label>
+                <label htmlFor="custom-google-email">
+                  Google Email Address
+                </label>
                 <input
                   id="custom-google-email"
                   type="email"
@@ -245,9 +260,16 @@ const GoogleSignInButton = ({ text = "Continue with Google", onStart, onSuccess,
             {/* Google Footer Disclaimer */}
             <div className="google-disclaimer">
               <p>
-                To continue, Google will share your name and email with CookFusion. See our{" "}
-                <a href="#privacy" onClick={(e) => e.preventDefault()}>Privacy Policy</a> and{" "}
-                <a href="#terms" onClick={(e) => e.preventDefault()}>Terms of Service</a>.
+                To continue, Google will share your name and email with
+                CookFusion. See our{" "}
+                <a href="#privacy" onClick={(e) => e.preventDefault()}>
+                  Privacy Policy
+                </a>{" "}
+                and{" "}
+                <a href="#terms" onClick={(e) => e.preventDefault()}>
+                  Terms of Service
+                </a>
+                .
               </p>
             </div>
           </div>
@@ -258,4 +280,3 @@ const GoogleSignInButton = ({ text = "Continue with Google", onStart, onSuccess,
 };
 
 export default GoogleSignInButton;
-
